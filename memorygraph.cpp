@@ -87,16 +87,7 @@ namespace std {
 
 				// Remove from the adjacency list of all adjacent nodes
 				for(u64 newNode : adjacentNodes){
-					unordered_map<u64>::const_iterator edgesFromNewNodeFound = adjacencyList.find(newNode);
-					if(edgesFromNewNodeFound != adjacencyList.end()){
-						vector<u64> edgesFromNewNode = edgesFromNewNodeFound->second;
-						for(int i = 0; i < edgesFromNewNode.size(); i++) {
-							if(edgesFromNewNode[i] == node_id){
-								adjacencyList[newNode].erase(i);
-								break;
-							}
-						}
-					}
+					remove_edge(newNode,node_id);
 				}
 
 				// Clear adjacency list for node_id itself
