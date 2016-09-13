@@ -1,10 +1,5 @@
 #include <cstdint>
 
-struct returnedNode {
-	bool in_graph;
-	int status;
-};
-
 int add_node(uint64_t node_id);
 
 int add_edge(uint64_t node_a_id, uint64_t node_b_id);

@@ -1,5 +1,5 @@
 #include <iostream>
-#include <vector>
+#include <list>
 #include <iterator>
 #include <unordered_map>
 #include <unordered_set>
@@ -8,12 +8,12 @@
 
 using std::unordered_map;
 using std::unordered_set;
-using std::vector;
+using std::list;
 using std::iterator;
 using std::cout;
 using std::pair;
 
-static unordered_map<uint64_t,vector<uint64_t> > adjacencyList;
+static unordered_map<uint64_t,list<uint64_t> > adjacencyList;
 
 static unordered_set<uint64_t> nodes;
 
@@ -23,7 +23,7 @@ struct nodeData {
 };
 
 struct neighborData{
-	vector<uint64_t> neighbors;
+	list<uint64_t> neighbors;
 	int status;
 };
 
@@ -72,10 +72,10 @@ int remove_node(uint64_t node_id) {
 		nodes.erase(node_id);
 
 		// Remove all edges with node
-		unordered_map<uint64_t,vector<uint64_t> >::const_iterator foundEdges = adjacencyList.find(node_id);
+		unordered_map<uint64_t,list<uint64_t> >::const_iterator foundEdges = adjacencyList.find(node_id);
 
 		if(foundEdges != adjacencyList.end()) {
-			vector<uint64_t> adjacentNodes = foundEdges->second;
+			list<uint64_t> adjacentNodes = foundEdges->second;
 
 			// Remove from the adjacency list of all adjacent nodes
 			for(uint64_t newNode : adjacentNodes){
@@ -93,14 +93,15 @@ int remove_node(uint64_t node_id) {
 }
 
 int remove_edge(uint64_t node_a_id, uint64_t node_b_id) {
-	unordered_map<uint64_t,vector<uint64_t> >::const_iterator foundA = adjacencyList.find(node_a_id);
-	unordered_map<uint64_t,vector<uint64_t> >::const_iterator foundB = adjacencyList.find(node_b_id);
+	unordered_map<uint64_t,list<uint64_t> >::const_iterator foundA = adjacencyList.find(node_a_id);
+	unordered_map<uint64_t,list<uint64_t> >::const_iterator foundB = adjacencyList.find(node_b_id);
 	if(foundA != adjacencyList.end() && foundB != adjacencyList.end()){
 		bool adjacencyFound = false;
 
 		// Remove B from A's adjacency list
-		vector<uint64_t> edgesFromA = foundA->second;
-		for(vector<uint64_t>::const_iterator i = edgesFromA.begin(); i != edgesFromA.end(); i++) {
+		list<uint64_t> edgesFromA = foundA->second;
+		for(list<uint64_t>::const_iterator i = edgesFromA.begin(); i != edgesFromA.end(); i++) {
+				cout << node_a_id << " adjacent to: " << (*i) << '\n';
 			if((*i) == node_b_id){
 				adjacencyList[node_a_id].erase(i);
 				adjacencyFound = true;
@@ -109,8 +110,9 @@ int remove_edge(uint64_t node_a_id, uint64_t node_b_id) {
 		}
 
 		// Remove A from B's adjacency list
-		vector<uint64_t> edgesFromB = foundB->second;
-		for(vector<uint64_t>::const_iterator i = edgesFromB.begin(); i != edgesFromB.end(); i++) {
+		list<uint64_t> edgesFromB = foundB->second;
+		for(list<uint64_t>::const_iterator i = edgesFromB.begin(); i != edgesFromB.end(); i++) {
+				cout << node_b_id << " adjacent to: " << (*i) << '\n';
 			if((*i) == node_a_id){
 				adjacencyList[node_b_id].erase(i);
 				adjacencyFound = true;
@@ -155,7 +157,7 @@ struct nodeData get_edge(uint64_t node_a_id, uint64_t node_b_id) {
 		out.status = 200;
 
 		// A and B in graph
-		vector<uint64_t> adjacentToA = adjacencyList.find(node_a_id)->second;
+		list<uint64_t> adjacentToA = adjacencyList[node_a_id];
 		bool nodesAdjacent = false;
 
 		for(uint64_t node : adjacentToA) {
@@ -172,7 +174,7 @@ struct nodeData get_edge(uint64_t node_a_id, uint64_t node_b_id) {
 
 struct neighborData get_neighbors(uint64_t node_id) {
 	struct neighborData out;
-	unordered_map<uint64_t,vector<uint64_t> >::const_iterator found = adjacencyList.find(node_id);
+	unordered_map<uint64_t,list<uint64_t> >::const_iterator found = adjacencyList.find(node_id);
 	if(found != adjacencyList.end()) {
 		// Found neighbors for node
 		out.neighbors = adjacencyList[node_id];
@@ -194,7 +196,7 @@ void print_nodes(){
 }
 
 void print_graph(){
-	for(pair<uint64_t,vector<uint64_t> > pairing : adjacencyList) {
+	for(pair<uint64_t,list<uint64_t> > pairing : adjacencyList) {
 		cout << pairing.first << ": ";
 		for(uint64_t adjacency : pairing.second) {
 			cout << adjacency << ' ';
@@ -207,10 +209,17 @@ int main(void) {
 	cout << add_node(10) << '\n';
 	cout << add_node(15) << '\n';
 	cout << add_node(10) << '\n';
+	cout << add_node(25) << '\n';
 	cout << add_edge(10,10) << '\n';
+	cout << add_edge(10,20) << '\n';
+	cout << "I AM HERE\n";
 	cout << add_edge(10,15) << '\n';
+	cout << add_edge(25,15) << '\n';
+	cout << "I AM HERE TOO \n";
 	print_nodes();
 	print_graph();
+	cout << "I AM HERE THREE \n";
+	cout << remove_edge(25,15) << '\n';
 	cout << remove_node(15) << '\n';
 	cout << remove_node(20) << '\n';
 	cout << "here" << '\n';
