@@ -3,6 +3,7 @@
 #include <iterator>
 #include <unordered_map>
 #include <unordered_set>
+#include <queue>
 #include <cstdint>
 #include "memorygraph.hpp"
 
@@ -12,6 +13,7 @@ using std::list;
 using std::iterator;
 using std::cout;
 using std::pair;
+using std::queue;
 
 static unordered_map<uint64_t,list<uint64_t> > adjacencyList;
 
@@ -32,6 +34,11 @@ struct distanceData {
 	int status;
 };
 
+struct traversedNode {
+	uint64_t id;
+	uint64_t distance;
+};
+
 int add_node(uint64_t node_id) {
 	if(get_node(node_id).in_graph) {
 		// Node already in graph
@@ -39,6 +46,7 @@ int add_node(uint64_t node_id) {
 	} else {
 		// Node not already in graph
 		nodes.insert(node_id);
+		adjacencyList[node_id];
 		return 200;
 	}
 }
@@ -83,7 +91,7 @@ int remove_node(uint64_t node_id) {
 			}
 
 			// Clear adjacency list for node_id itself
-			adjacencyList[node_id].clear();
+			adjacencyList.erase(node_id);
 		}
 		return 200;
 	} else {
@@ -101,9 +109,8 @@ int remove_edge(uint64_t node_a_id, uint64_t node_b_id) {
 		// Remove B from A's adjacency list
 		list<uint64_t> edgesFromA = foundA->second;
 		for(list<uint64_t>::const_iterator i = edgesFromA.begin(); i != edgesFromA.end(); i++) {
-				cout << node_a_id << " adjacent to: " << (*i) << '\n';
 			if((*i) == node_b_id){
-				adjacencyList[node_a_id].erase(i);
+				// adjacencyList[node_a_id].erase(i);
 				adjacencyFound = true;
 				break;
 			}
@@ -112,13 +119,15 @@ int remove_edge(uint64_t node_a_id, uint64_t node_b_id) {
 		// Remove A from B's adjacency list
 		list<uint64_t> edgesFromB = foundB->second;
 		for(list<uint64_t>::const_iterator i = edgesFromB.begin(); i != edgesFromB.end(); i++) {
-				cout << node_b_id << " adjacent to: " << (*i) << '\n';
 			if((*i) == node_a_id){
-				adjacencyList[node_b_id].erase(i);
+				// adjacencyList[node_b_id].erase(i);
 				adjacencyFound = true;
 				break;
 			}
 		}
+
+		adjacencyList[node_b_id].remove(node_a_id);
+		adjacencyList[node_a_id].remove(node_b_id);
 
 		if(adjacencyFound){
 			return 200;
@@ -187,7 +196,46 @@ struct neighborData get_neighbors(uint64_t node_id) {
 	return out;
 }
 
-int shortest_path(uint64_t node_a_id, uint node_b_id) {}
+int shortest_path(uint64_t node_a_id, uint node_b_id) {
+	if(nodes.find(node_a_id) == nodes.end() || nodes.find(node_b_id) == nodes.end()) {
+		return 400;
+	}
+
+	if(node_a_id == node_b_id) {
+		return 0;
+	}
+	queue<struct traversedNode> traversal;
+	unordered_set<uint64_t> seen;
+
+	struct traversedNode first;
+	first.id = node_a_id;
+	first.distance = 0;
+	int currDist = 1;
+	traversal.push(first);
+	seen.insert(first.id);
+	while(!traversal.empty()) {
+		struct traversedNode curr = traversal.front();
+		traversal.pop();
+		list<uint64_t> adjacent = get_neighbors(curr.id).neighbors;
+
+		for(uint64_t adjNode : adjacent) {
+			if(adjNode == node_b_id) {
+				return curr.distance + 1;
+			}
+			if(seen.find(adjNode) == seen.end()){
+				struct traversedNode newNode;
+				newNode.id = adjNode;
+				newNode.distance = currDist;
+				traversal.push(newNode);
+				seen.insert(adjNode);
+			}
+		}
+		currDist++;
+	}
+
+	// Nodes are not connected
+	return 204;
+}
 
 void print_nodes(){
 	for(uint64_t node : nodes) {
@@ -206,6 +254,9 @@ void print_graph(){
 }
 
 int main(void) {
+	cout << add_node(5) << '\n';
+	print_graph();
+	cout << '\b';
 	cout << add_node(10) << '\n';
 	cout << add_node(15) << '\n';
 	cout << add_node(10) << '\n';
@@ -220,7 +271,13 @@ int main(void) {
 	print_graph();
 	cout << "I AM HERE THREE \n";
 	cout << remove_edge(25,15) << '\n';
+	cout << "Removed edge: \n";
+	print_graph();
+	cout << '\n';
 	cout << remove_node(15) << '\n';
+	cout << "Removed node: \n";
+	print_graph();
+	cout << '\n';
 	cout << remove_node(20) << '\n';
 	cout << "here" << '\n';
 
@@ -229,4 +286,17 @@ int main(void) {
 	cout << get_node(15).in_graph << '\n';
 	cout << get_node(15).status << '\n';
 	print_nodes();
+	print_graph();
+	cout << '\n';
+
+	cout << add_node(15) << '\n';
+	cout << add_node(20) << '\n';
+	cout << add_node(30) << '\n';
+	cout << add_node(35) << '\n';
+	cout << add_edge(15,20) << '\n';
+	cout << add_edge(20,30) << '\n';
+	cout << add_edge(30,35) << '\n';
+	cout << "Shortest path from 15 to 35: " << shortest_path(15,35) << '\n';
+	print_nodes();
+	print_graph();
 }
