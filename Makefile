@@ -6,7 +6,10 @@ all: memorygraph
 memorygraph: memorygraph.o
 	${CC} ${CFLAGS} -o $@ $^
 
+main: main.cpp
+	${CC} ${CFLAGS} $^ -o cs426_graph_server
+
 memorygraph.o: memorygraph.cpp memorygraph.hpp
 
 clean:
-	$(RM) memorygraph *.o
+	$(RM) memorygraph cs426_graph_server *.o
