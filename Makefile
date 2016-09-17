@@ -1,15 +1,15 @@
 CC = g++
-CFLAGS = -std=c++11 -Wall -pedantic
+CFLAGS = -std=c++11 -Wall -pedantic -I ./include
 
-all: memorygraph
+all: memorygraph main
 
-memorygraph: memorygraph.o
-	${CC} ${CFLAGS} -o $@ $^
+memorygraph: memorygraph.cpp memorygraph.hpp
+	${CC} ${CFLAGS} memorygraph.cpp -o build/$@
 
 main: main.cpp
-	${CC} ${CFLAGS} $^ -o cs426_graph_server
+	${CC} ${CFLAGS} $^ -o build/cs426_graph_server
 
 memorygraph.o: memorygraph.cpp memorygraph.hpp
 
 clean:
-	$(RM) memorygraph cs426_graph_server *.o
+	$(RM) build/*
