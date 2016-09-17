@@ -7,9 +7,12 @@ memorygraph: memorygraph.cpp memorygraph.hpp
 	${CC} ${CFLAGS} memorygraph.cpp -o build/$@
 
 main: main.cpp
-	${CC} ${CFLAGS} $^ -o build/cs426_graph_server
+	${CC} ${CFLAGS} $^ include/mongoose.c -o build/cs426_graph_server
 
 memorygraph.o: memorygraph.cpp memorygraph.hpp
 
 clean:
 	$(RM) build/*
+
+run:
+	build/cs426_graph_server 8080
