@@ -19,15 +19,18 @@ void check_args(int argc){
 // event handler
 static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
   struct mbuf *io = &nc->recv_mbuf;
+	struct http_message *hm = (struct http_message *) ev_data;
 
   switch (ev) {
 		case MG_EV_HTTP_REQUEST:
-			cout << "Received an HTTP request!" << endl;
+			cout << "Received HTTP request! Body:" << endl;
+			cout << hm->body.p << endl;
 			break;
     case MG_EV_RECV:
       // This event handler implements simple TCP echo server
-      mg_send(nc, io->buf, io->len);  // Echo received data back
-      mbuf_remove(io, io->len);      // Discard data from recv buffer
+			// mg_send(nc, io->buf, io->len);  // Echo received data back
+			// cout << io->buf << endl;
+      // mbuf_remove(io, io->len);      // Discard data from recv buffer
       break;
     default:
       break;
