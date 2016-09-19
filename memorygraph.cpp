@@ -181,7 +181,7 @@ struct neighborData get_neighbors(uint64_t node_id) {
 	return out;
 }
 
-int shortest_path(uint64_t node_a_id, uint node_b_id) {
+int shortest_path(uint64_t node_a_id, uint64_t node_b_id) {
 	if(nodes.find(node_a_id) == nodes.end() || nodes.find(node_b_id) == nodes.end()) {
 		return 400;
 	}
