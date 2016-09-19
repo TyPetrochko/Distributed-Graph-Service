@@ -33,8 +33,3 @@ struct distanceData {
 	int status;
 };
 
-struct traversedNode {
-	uint64_t id;
-	uint64_t distance;
-};
-
