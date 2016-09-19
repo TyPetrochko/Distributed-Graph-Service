@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -std=c++11 -pedantic -Wall -I ./include
+CFLAGS = -std=c++11 -pedantic -Wall -I ./include -g
 
 all: memorygraph main
 

@@ -39,7 +39,7 @@ struct http_message handle_request(const char *body, const char* uri){
 	// parse any json in the request
 	value = JSON::Parse(body);
 	if(value == NULL || value->IsObject() == false){
-		prog_abort("Couldn't parse JSON!");
+		prog_abort("Couldn't parse JSON: " + string(body));
 	}
 	root = value->AsObject();
 
@@ -54,36 +54,47 @@ struct http_message handle_request(const char *body, const char* uri){
 	// make a blank request
 	struct http_message response = {};
 	response.proto = mg_mk_str("HTTP/1.1");
+	response.body = mg_mk_str("");
 
 	cout << "FUNCTION=<" << func << ">" << endl;
 	// giant pseudo-switch statement to actually call the API
-	if(func == "add_node" && root[L"node_id"]->IsNumber()){
+	if(func == "add_node" && root[L"node_id"] && root[L"node_id"]->IsNumber()){
 		response.resp_code = add_node(root[L"node_id"]->AsNumber());
 		if(response.resp_code == 200) response.body = mg_mk_str(body);
 	}else if (func == "add_edge" 
+			&& root[L"node_a_id"]
+			&& root[L"node_b_id"]
 			&& root[L"node_a_id"]->IsNumber() 
 			&& root[L"node_b_id"]->IsNumber()){
 		response.resp_code = add_edge(
 				root[L"node_a_id"]->AsNumber(),
 				root[L"node_b_id"]->AsNumber());
 		if(response.resp_code == 200) response.body = mg_mk_str(body);
-	}else if (func == "remove_node" && root[L"node_id"]->IsNumber()){
+	}else if (func == "remove_node" 
+			&& root[L"node_id"] 
+			&& root[L"node_id"]->IsNumber()){
 		response.resp_code = remove_node(root[L"node_id"]->AsNumber());
 		if(response.resp_code == 200) response.body = mg_mk_str(body);
 	}else if (func == "remove_edge"
+			&& root[L"node_a_id"]
+			&& root[L"node_b_id"]
 			&& root[L"node_a_id"]->IsNumber() 
 			&& root[L"node_b_id"]->IsNumber()){
 		response.resp_code = remove_edge(
 				root[L"node_a_id"]->AsNumber(),
 				root[L"node_b_id"]->AsNumber());
 		if(response.resp_code == 200) response.body = mg_mk_str(body);
-	}else if (func == "get_node" && root[L"node_id"]->IsNumber()){
+	}else if (func == "get_node" 
+			&& root[L"node_id"] 
+			&& root[L"node_id"]->IsNumber()){
 		struct nodeData d = get_node(root[L"node_id"]->AsNumber());
 		response.resp_code = d.status;
 		JSONObject return_data;
 		return_data[L"in_graph"] = new JSONValue(d.in_graph);
 		response.body = mg_mk_str(json_to_string(return_data).c_str());
 	}else if (func == "get_edge"
+			&& root[L"node_a_id"]
+			&& root[L"node_b_id"]
 			&& root[L"node_a_id"]->IsNumber() 
 			&& root[L"node_b_id"]->IsNumber()){
 		struct nodeData d = get_edge(
@@ -93,7 +104,9 @@ struct http_message handle_request(const char *body, const char* uri){
 		JSONObject return_data;
 		return_data[L"in_graph"] = new JSONValue(d.in_graph);
 		response.body = mg_mk_str(json_to_string(return_data).c_str());
-	}else if (func == "get_neighbors" && root[L"node_id"]->IsNumber()){
+	}else if (func == "get_neighbors" 
+			&& root[L"node_id"] 
+			&& root[L"node_id"]->IsNumber()){
 		struct neighborData d = get_neighbors(root[L"node_id"]->AsNumber());
 		if((response.resp_code = d.status) == 200){
 			JSONObject return_data;
@@ -107,14 +120,14 @@ struct http_message handle_request(const char *body, const char* uri){
 	}else if (func == "shortest_path"
 			&& root[L"node_a_id"]->IsNumber() 
 			&& root[L"node_b_id"]->IsNumber()){
-		// struct distanceData d = shortest_path(
-		// 		root[L"node_a_id"]->AsNumber(), 
-		// 		root[L"node_b_id"]->AsNumber());
-		// if((response.resp_code = d.status) == 200){
-		// 	JSONObject return_data;
-		// 	return_data[L"distance"] = new JSONValue((int) d.distance);
-		// 	response.body = mg_mk_str(json_to_string(return_data).c_str());
-		// }
+		struct distanceData d = shortest_path(
+				root[L"node_a_id"]->AsNumber(), 
+				root[L"node_b_id"]->AsNumber());
+		if((response.resp_code = d.status) == 200){
+			JSONObject return_data;
+			return_data[L"distance"] = new JSONValue((int) d.distance);
+			response.body = mg_mk_str(json_to_string(return_data).c_str());
+		}
 	}
 
 	// give appropriate status message
@@ -142,10 +155,12 @@ struct http_message handle_request(const char *body, const char* uri){
 static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
 	struct http_message *hm = (struct http_message *) ev_data;
 	struct mbuf *io = &nc->recv_mbuf;
+	struct mbuf *out = &nc->send_mbuf;
 	switch (ev) {
 		case MG_EV_HTTP_REQUEST:
 			{
-				struct http_message resp = handle_request(hm->body.p, hm->uri.p);
+				struct http_message resp = handle_request(
+						string(hm->body.p).substr(0, hm->body.len).c_str(), hm->uri.p);
 				
 				// build header
 				string headers_string = "Content-Length: " 
@@ -160,10 +175,11 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
 					+ " "
 					+ resp.resp_status_msg.p 
 					+ "\r\n"
-					+ headers_string
-					+ "\r\n\r\n"
-					+ resp.body.p
-					+ "\r\n";
+					+ headers_string;
+				if(resp.body.p != NULL)
+					to_send = to_send + "\r\n\r\n" + resp.body.p;
+				
+				to_send += "\r\n";
 
 				//send it
 				mg_send(nc, to_send.c_str(), to_send.length());
@@ -175,6 +191,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
 
 				// close the connection!
 				nc->flags |= MG_F_SEND_AND_CLOSE;
+				mbuf_remove(io, io->len);
 			}
 			break;
     default:
