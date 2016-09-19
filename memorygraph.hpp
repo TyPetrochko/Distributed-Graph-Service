@@ -1,4 +1,6 @@
 #include <cstdint>
+#include <list>
+using std::list;
 
 int add_node(uint64_t node_id);
 
