@@ -181,13 +181,19 @@ struct neighborData get_neighbors(uint64_t node_id) {
 	return out;
 }
 
-int shortest_path(uint64_t node_a_id, uint64_t node_b_id) {
+struct distanceData shortest_path(uint64_t node_a_id, uint64_t node_b_id) {
+	struct distanceData out;
+
 	if(nodes.find(node_a_id) == nodes.end() || nodes.find(node_b_id) == nodes.end()) {
-		return 400;
+		out.distance = -1;
+		out.status = 400;
+		return out;
 	}
 
 	if(node_a_id == node_b_id) {
-		return 0;
+		out.distance = 0;
+		out.status = 200;
+		return out;
 	}
 	queue<struct traversedNode> traversal;
 	unordered_set<uint64_t> seen;
@@ -205,7 +211,9 @@ int shortest_path(uint64_t node_a_id, uint64_t node_b_id) {
 
 		for(uint64_t adjNode : adjacent) {
 			if(adjNode == node_b_id) {
-				return curr.distance + 1;
+				out.distance = curr.distance + 1;
+				out.status = 200;
+				return out;
 			}
 			if(seen.find(adjNode) == seen.end()){
 				struct traversedNode newNode;
@@ -219,7 +227,9 @@ int shortest_path(uint64_t node_a_id, uint64_t node_b_id) {
 	}
 
 	// Nodes are not connected
-	return 204;
+	out.distance = -1;
+	out.status = 204;
+	return out;
 }
 
 void print_nodes(){
@@ -281,7 +291,8 @@ int main(void) {
 	cout << add_edge(15,20) << '\n';
 	cout << add_edge(20,30) << '\n';
 	cout << add_edge(30,35) << '\n';
-	cout << "Shortest path from 15 to 35: " << shortest_path(15,35) << '\n';
+	cout << "Shortest path from 15 to 35: " << shortest_path(15,35).distance << '\n';
+	cout << "Shortest path status from 15 to 35: " << shortest_path(15,35).status << '\n';
 	print_nodes();
 	print_graph();
 }
