@@ -24,32 +24,36 @@ void check_args(int argc){
 		prog_abort("Usage: ./cs426_graph_server <port>");
 }
 
+string mg_str_to_string(struct mg_str m){
+	string s = string(m.p).substr(0, m.len);
+	return s;
+}
+
 string json_to_string(JSONObject j){
 	wstring ws((new JSONValue(j))->Stringify());
 	string str(ws.begin(), ws.end());
 	return str;
 }
 
-struct http_message handle_request(const char *body, const char* uri){
+struct http_message handle_request(string body, string uri){
 	JSONValue *value;
 	JSONObject root;
 	string func;
 	string prefix = "/api/v1/";
 
 	// parse any json in the request
-	value = JSON::Parse(body);
+	value = JSON::Parse(body.c_str());
 	if(value == NULL || value->IsObject() == false){
-		prog_abort("Couldn't parse JSON: " + string(body));
+		prog_abort("Couldn't parse JSON: " + body);
 	}
 	root = value->AsObject();
 
 	// remove prefix from uri
-	func = string(uri);
+	func = uri;
 	if(func.length() <= prefix.length()){
 		prog_abort("Bad URI: " + func);
 	}
 	func.erase(0, prefix.length());
-	func = func.substr(0, func.find(" "));
 
 	// make a blank request
 	struct http_message response = {};
@@ -60,7 +64,7 @@ struct http_message handle_request(const char *body, const char* uri){
 	// giant pseudo-switch statement to actually call the API
 	if(func == "add_node" && root[L"node_id"] && root[L"node_id"]->IsNumber()){
 		response.resp_code = add_node(root[L"node_id"]->AsNumber());
-		if(response.resp_code == 200) response.body = mg_mk_str(body);
+		if(response.resp_code == 200) response.body = mg_mk_str(body.c_str());
 	}else if (func == "add_edge" 
 			&& root[L"node_a_id"]
 			&& root[L"node_b_id"]
@@ -69,12 +73,12 @@ struct http_message handle_request(const char *body, const char* uri){
 		response.resp_code = add_edge(
 				root[L"node_a_id"]->AsNumber(),
 				root[L"node_b_id"]->AsNumber());
-		if(response.resp_code == 200) response.body = mg_mk_str(body);
+		if(response.resp_code == 200) response.body = mg_mk_str(body.c_str());
 	}else if (func == "remove_node" 
 			&& root[L"node_id"] 
 			&& root[L"node_id"]->IsNumber()){
 		response.resp_code = remove_node(root[L"node_id"]->AsNumber());
-		if(response.resp_code == 200) response.body = mg_mk_str(body);
+		if(response.resp_code == 200) response.body = mg_mk_str(body.c_str());
 	}else if (func == "remove_edge"
 			&& root[L"node_a_id"]
 			&& root[L"node_b_id"]
@@ -83,7 +87,7 @@ struct http_message handle_request(const char *body, const char* uri){
 		response.resp_code = remove_edge(
 				root[L"node_a_id"]->AsNumber(),
 				root[L"node_b_id"]->AsNumber());
-		if(response.resp_code == 200) response.body = mg_mk_str(body);
+		if(response.resp_code == 200) response.body = mg_mk_str(body.c_str());
 	}else if (func == "get_node" 
 			&& root[L"node_id"] 
 			&& root[L"node_id"]->IsNumber()){
@@ -160,7 +164,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
 		case MG_EV_HTTP_REQUEST:
 			{
 				struct http_message resp = handle_request(
-						string(hm->body.p).substr(0, hm->body.len).c_str(), hm->uri.p);
+						mg_str_to_string(hm->body), mg_str_to_string(hm->uri));
 				
 				// build header
 				string headers_string = "Content-Length: " 
@@ -169,15 +173,15 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
 					+ "Content-Type: application/json";
 
 				// build text to send
-				string to_send = string(resp.proto.p)
+				string to_send = mg_str_to_string(resp.proto)
 					+ " "
 					+ to_string(resp.resp_code)
 					+ " "
-					+ resp.resp_status_msg.p 
+					+ mg_str_to_string(resp.resp_status_msg)
 					+ "\r\n"
 					+ headers_string;
 				if(resp.body.p != NULL)
-					to_send = to_send + "\r\n\r\n" + resp.body.p;
+					to_send = to_send + "\r\n\r\n" + mg_str_to_string(resp.body);
 				
 				to_send += "\r\n";
 
