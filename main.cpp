@@ -1,9 +1,12 @@
 /* Much of this code is adapted from the mongoose examples page,
  * https://docs.cesanta.com/mongoose/dev/#/usage-example/ */
 #include <iostream>
+#include <vector>
 #include <string>
 #include "mongoose.h"
-#include "memorygraph.hpp" 
+#include "memorygraph.hpp"
+#include "JSON.h"
+#include <stdlib.h>
 using namespace std;
 
 void prog_abort(string msg){
@@ -11,27 +14,169 @@ void prog_abort(string msg){
 	exit(1);
 }
 
+void prog_assert(int condition, string err_msg){
+	if(!condition)
+		prog_abort(err_msg);
+}
+
 void check_args(int argc){
 	if (argc < 2)
 		prog_abort("Usage: ./cs426_graph_server <port>");
 }
 
+string json_to_string(JSONObject j){
+	wstring ws((new JSONValue(j))->Stringify());
+	string str(ws.begin(), ws.end());
+	return str;
+}
+
+struct http_message handle_request(const char *body, const char* uri){
+	JSONValue *value;
+	JSONObject root;
+	string func;
+	string prefix = "/api/v1/";
+
+	// parse any json in the request
+	value = JSON::Parse(body);
+	if(value == NULL || value->IsObject() == false){
+		prog_abort("Couldn't parse JSON!");
+	}
+	root = value->AsObject();
+
+	// remove prefix from uri
+	func = string(uri);
+	if(func.length() <= prefix.length()){
+		prog_abort("Bad URI: " + func);
+	}
+	func.erase(0, prefix.length());
+	func = func.substr(0, func.find(" "));
+
+	// make a blank request
+	struct http_message response = {};
+	response.proto = mg_mk_str("HTTP/1.1");
+
+	cout << "FUNCTION=<" << func << ">" << endl;
+	// giant pseudo-switch statement to actually call the API
+	if(func == "add_node" && root[L"node_id"]->IsNumber()){
+		response.resp_code = add_node(root[L"node_id"]->AsNumber());
+		if(response.resp_code == 200) response.body = mg_mk_str(body);
+	}else if (func == "add_edge" 
+			&& root[L"node_a_id"]->IsNumber() 
+			&& root[L"node_b_id"]->IsNumber()){
+		response.resp_code = add_edge(
+				root[L"node_a_id"]->AsNumber(),
+				root[L"node_b_id"]->AsNumber());
+		if(response.resp_code == 200) response.body = mg_mk_str(body);
+	}else if (func == "remove_node" && root[L"node_id"]->IsNumber()){
+		response.resp_code = remove_node(root[L"node_id"]->AsNumber());
+		if(response.resp_code == 200) response.body = mg_mk_str(body);
+	}else if (func == "remove_edge"
+			&& root[L"node_a_id"]->IsNumber() 
+			&& root[L"node_b_id"]->IsNumber()){
+		response.resp_code = remove_edge(
+				root[L"node_a_id"]->AsNumber(),
+				root[L"node_b_id"]->AsNumber());
+		if(response.resp_code == 200) response.body = mg_mk_str(body);
+	}else if (func == "get_node" && root[L"node_id"]->IsNumber()){
+		struct nodeData d = get_node(root[L"node_id"]->AsNumber());
+		response.resp_code = d.status;
+		JSONObject return_data;
+		return_data[L"in_graph"] = new JSONValue(d.in_graph);
+		response.body = mg_mk_str(json_to_string(return_data).c_str());
+	}else if (func == "get_edge"
+			&& root[L"node_a_id"]->IsNumber() 
+			&& root[L"node_b_id"]->IsNumber()){
+		struct nodeData d = get_edge(
+				root[L"node_a_id"]->AsNumber(),
+				root[L"node_b_id"]->AsNumber());
+		response.resp_code = d.status;
+		JSONObject return_data;
+		return_data[L"in_graph"] = new JSONValue(d.in_graph);
+		response.body = mg_mk_str(json_to_string(return_data).c_str());
+	}else if (func == "get_neighbors" && root[L"node_id"]->IsNumber()){
+		struct neighborData d = get_neighbors(root[L"node_id"]->AsNumber());
+		if((response.resp_code = d.status) == 200){
+			JSONObject return_data;
+			JSONArray neighbors;
+			for(uint64_t n : d.neighbors){
+				neighbors.push_back(new JSONValue((double) n));
+			}
+			return_data[L"neighbors"] = new JSONValue(neighbors);
+			response.body = mg_mk_str(json_to_string(return_data).c_str());
+		}
+	}else if (func == "shortest_path"
+			&& root[L"node_a_id"]->IsNumber() 
+			&& root[L"node_b_id"]->IsNumber()){
+		// struct distanceData d = shortest_path(
+		// 		root[L"node_a_id"]->AsNumber(), 
+		// 		root[L"node_b_id"]->AsNumber());
+		// if((response.resp_code = d.status) == 200){
+		// 	JSONObject return_data;
+		// 	return_data[L"distance"] = new JSONValue((int) d.distance);
+		// 	response.body = mg_mk_str(json_to_string(return_data).c_str());
+		// }
+	}
+
+	// give appropriate status message
+	if(response.resp_code == 400)
+		response.resp_status_msg = mg_mk_str("Bad Request");
+	else
+		response.resp_status_msg = mg_mk_str("OK");
+
+	/* Optional for Debugging
+	vector<wstring> keys = value->ObjectKeys();
+	wstring s;
+	for (vector<wstring>::iterator it = keys.begin(); it != keys.end(); ++it){
+		s = *it;
+		wcout << "KEY: " << s << endl;
+		wcout << "VALUE: " << root[s]->AsNumber() << endl;
+	}
+
+	cout << "HEREWEGO: " << root[L"node_id"]->AsNumber() << endl;
+	*/
+
+	return response;
+}
+
 // event handler
 static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
-  struct mbuf *io = &nc->recv_mbuf;
 	struct http_message *hm = (struct http_message *) ev_data;
-
-  switch (ev) {
+	struct mbuf *io = &nc->recv_mbuf;
+	switch (ev) {
 		case MG_EV_HTTP_REQUEST:
-			cout << "Received HTTP request! Body:" << endl;
-			cout << hm->body.p << endl;
+			{
+				struct http_message resp = handle_request(hm->body.p, hm->uri.p);
+				
+				// build header
+				string headers_string = "Content-Length: " 
+					+ to_string(resp.body.len)
+					+ "\r\n"
+					+ "Content-Type: application/json";
+
+				// build text to send
+				string to_send = string(resp.proto.p)
+					+ " "
+					+ to_string(resp.resp_code)
+					+ " "
+					+ resp.resp_status_msg.p 
+					+ "\r\n"
+					+ headers_string
+					+ "\r\n\r\n"
+					+ resp.body.p
+					+ "\r\n";
+
+				//send it
+				mg_send(nc, to_send.c_str(), to_send.length());
+
+				// debug!
+				cout << "BEGIN RESPONSE" << endl;
+				cout << to_send << endl;
+				cout << "END RESPONSE" << endl;
+
+				// close the connection!
+				nc->flags |= MG_F_SEND_AND_CLOSE;
+			}
 			break;
-    case MG_EV_RECV:
-      // This event handler implements simple TCP echo server
-			// mg_send(nc, io->buf, io->len);  // Echo received data back
-			// cout << io->buf << endl;
-      // mbuf_remove(io, io->len);      // Discard data from recv buffer
-      break;
     default:
       break;
   }

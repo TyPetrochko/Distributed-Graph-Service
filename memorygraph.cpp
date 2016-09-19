@@ -238,7 +238,7 @@ void print_graph(){
 	}
 }
 
-int main(void) {
+int x_main(void) {
 	cout << add_node(5) << '\n';
 	print_graph();
 	cout << '\b';
@@ -284,4 +284,5 @@ int main(void) {
 	cout << "Shortest path from 15 to 35: " << shortest_path(15,35) << '\n';
 	print_nodes();
 	print_graph();
+	return 0;
 }

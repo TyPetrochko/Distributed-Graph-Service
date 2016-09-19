@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -std=c++11 -Wall -pedantic -I ./include
+CFLAGS = -std=c++11 -pedantic -Wall -I ./include
 
 all: memorygraph main
 
@@ -7,12 +7,12 @@ memorygraph: memorygraph.cpp memorygraph.hpp
 	${CC} ${CFLAGS} memorygraph.cpp -o build/$@
 
 main: main.cpp
-	${CC} ${CFLAGS} $^ include/mongoose.c -o build/cs426_graph_server
+	${CC} ${CFLAGS} $^ memorygraph.cpp include/mongoose.c include/JSON.cpp include/JSONValue.cpp -o build/cs426_graph_server
 
 memorygraph.o: memorygraph.cpp memorygraph.hpp
 
 clean:
 	$(RM) build/*
 
-run:
+run: main
 	build/cs426_graph_server 8080
