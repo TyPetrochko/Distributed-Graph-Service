@@ -19,25 +19,6 @@ static unordered_map<uint64_t,list<uint64_t> > adjacencyList;
 
 static unordered_set<uint64_t> nodes;
 
-struct nodeData {
-	bool in_graph;
-	int status;
-};
-
-struct neighborData{
-	list<uint64_t> neighbors;
-	int status;
-};
-
-struct distanceData {
-	uint64_t distance;
-	int status;
-};
-
-struct traversedNode {
-	uint64_t id;
-	uint64_t distance;
-};
 
 int add_node(uint64_t node_id) {
 	if(get_node(node_id).in_graph) {
