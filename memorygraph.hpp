@@ -16,7 +16,7 @@ struct nodeData get_edge(uint64_t node_a_id, uint64_t node_b_id);
 
 struct neighborData get_neighbors(uint64_t node_id);
 
-int shortest_path(uint64_t node_a_id, uint node_b_id);
+int shortest_path(uint64_t node_a_id, uint64_t node_b_id);
 
 struct nodeData {
 	bool in_graph;
