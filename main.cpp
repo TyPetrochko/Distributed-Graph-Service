@@ -1,5 +1,7 @@
 /* Much of this code is adapted from the mongoose examples page,
  * https://docs.cesanta.com/mongoose/dev/#/usage-example/ */
+#define DEBUG (false)
+
 #include <iostream>
 #include <vector>
 #include <string>
@@ -9,33 +11,33 @@
 #include <stdlib.h>
 using namespace std;
 
-void prog_abort(string msg){
-	cout << msg << endl;
-	exit(1);
-}
-
-void prog_assert(int condition, string err_msg){
-	if(!condition)
-		prog_abort(err_msg);
-}
+// default error message
+string err_msg = string("HTTP/1.1 400 Bad Request\r\n")
++ "Content-Length: 0\r\n"
++	"Content-Type: application/json\r\n";
 
 void check_args(int argc){
-	if (argc < 2)
-		prog_abort("Usage: ./cs426_graph_server <port>");
+	if (argc < 2){
+		cerr << "Usage: ./cs426_graph_server <port>" << endl;
+		exit(1);
+	}
 }
 
+// convert mongoose's weird string struct to a regular c++ string
 string mg_str_to_string(struct mg_str m){
 	string s = string(m.p).substr(0, m.len);
 	return s;
 }
 
+// convert a json object to a c++ string (supports unicode)
 string json_to_string(JSONObject j){
 	wstring ws((new JSONValue(j))->Stringify());
 	string str(ws.begin(), ws.end());
 	return str;
 }
 
-struct http_message handle_request(string body, string uri){
+// handle an incoming api cal
+string handle_request(string body, string uri){
 	JSONValue *value;
 	JSONObject root;
 	string func;
@@ -44,58 +46,57 @@ struct http_message handle_request(string body, string uri){
 	// parse any json in the request
 	value = JSON::Parse(body.c_str());
 	if(value == NULL || value->IsObject() == false){
-		prog_abort("Couldn't parse JSON: " + body);
+		return err_msg;
 	}
 	root = value->AsObject();
 
 	// remove prefix from uri
 	func = uri;
 	if(func.length() <= prefix.length()){
-		prog_abort("Bad URI: " + func);
+		return err_msg;
 	}
 	func.erase(0, prefix.length());
 
-	// make a blank request
-	struct http_message response = {};
-	response.proto = mg_mk_str("HTTP/1.1");
-	response.body = mg_mk_str("");
+	// initialize default values for response
+	string payload  = "";
+	string proto = "HTTP/1.1";
+	int resp_code = 400;
 
-	cout << "FUNCTION=<" << func << ">" << endl;
 	// giant pseudo-switch statement to actually call the API
 	if(func == "add_node" && root[L"node_id"] && root[L"node_id"]->IsNumber()){
-		response.resp_code = add_node(root[L"node_id"]->AsNumber());
-		if(response.resp_code == 200) response.body = mg_mk_str(body.c_str());
+		resp_code = add_node(root[L"node_id"]->AsNumber());
+		if(resp_code == 200) payload = body;
 	}else if (func == "add_edge" 
 			&& root[L"node_a_id"]
 			&& root[L"node_b_id"]
 			&& root[L"node_a_id"]->IsNumber() 
 			&& root[L"node_b_id"]->IsNumber()){
-		response.resp_code = add_edge(
+		resp_code = add_edge(
 				root[L"node_a_id"]->AsNumber(),
 				root[L"node_b_id"]->AsNumber());
-		if(response.resp_code == 200) response.body = mg_mk_str(body.c_str());
+		if(resp_code == 200) payload = body;
 	}else if (func == "remove_node" 
 			&& root[L"node_id"] 
 			&& root[L"node_id"]->IsNumber()){
-		response.resp_code = remove_node(root[L"node_id"]->AsNumber());
-		if(response.resp_code == 200) response.body = mg_mk_str(body.c_str());
+		resp_code = remove_node(root[L"node_id"]->AsNumber());
+		if(resp_code == 200) payload = body;
 	}else if (func == "remove_edge"
 			&& root[L"node_a_id"]
 			&& root[L"node_b_id"]
 			&& root[L"node_a_id"]->IsNumber() 
 			&& root[L"node_b_id"]->IsNumber()){
-		response.resp_code = remove_edge(
+		resp_code = remove_edge(
 				root[L"node_a_id"]->AsNumber(),
 				root[L"node_b_id"]->AsNumber());
-		if(response.resp_code == 200) response.body = mg_mk_str(body.c_str());
+		if(resp_code == 200) payload = body;
 	}else if (func == "get_node" 
 			&& root[L"node_id"] 
 			&& root[L"node_id"]->IsNumber()){
 		struct nodeData d = get_node(root[L"node_id"]->AsNumber());
-		response.resp_code = d.status;
+		resp_code = d.status;
 		JSONObject return_data;
 		return_data[L"in_graph"] = new JSONValue(d.in_graph);
-		response.body = mg_mk_str(json_to_string(return_data).c_str());
+		payload = json_to_string(return_data).c_str();
 	}else if (func == "get_edge"
 			&& root[L"node_a_id"]
 			&& root[L"node_b_id"]
@@ -104,22 +105,23 @@ struct http_message handle_request(string body, string uri){
 		struct nodeData d = get_edge(
 				root[L"node_a_id"]->AsNumber(),
 				root[L"node_b_id"]->AsNumber());
-		response.resp_code = d.status;
+		resp_code = d.status;
 		JSONObject return_data;
 		return_data[L"in_graph"] = new JSONValue(d.in_graph);
-		response.body = mg_mk_str(json_to_string(return_data).c_str());
+		payload = json_to_string(return_data).c_str();
 	}else if (func == "get_neighbors" 
 			&& root[L"node_id"] 
 			&& root[L"node_id"]->IsNumber()){
 		struct neighborData d = get_neighbors(root[L"node_id"]->AsNumber());
-		if((response.resp_code = d.status) == 200){
+		if((resp_code = d.status) == 200){
 			JSONObject return_data;
 			JSONArray neighbors;
 			for(uint64_t n : d.neighbors){
 				neighbors.push_back(new JSONValue((double) n));
 			}
+			return_data[L"node_id"] = root[L"node_id"];
 			return_data[L"neighbors"] = new JSONValue(neighbors);
-			response.body = mg_mk_str(json_to_string(return_data).c_str());
+			payload = json_to_string(return_data);
 		}
 	}else if (func == "shortest_path"
 			&& root[L"node_a_id"]->IsNumber() 
@@ -127,71 +129,62 @@ struct http_message handle_request(string body, string uri){
 		struct distanceData d = shortest_path(
 				root[L"node_a_id"]->AsNumber(), 
 				root[L"node_b_id"]->AsNumber());
-		if((response.resp_code = d.status) == 200){
+		if((resp_code = d.status) == 200){
 			JSONObject return_data;
 			return_data[L"distance"] = new JSONValue((int) d.distance);
-			response.body = mg_mk_str(json_to_string(return_data).c_str());
+			payload = json_to_string(return_data).c_str();
 		}
+	}else{
+		return err_msg;
 	}
 
 	// give appropriate status message
-	if(response.resp_code == 400)
-		response.resp_status_msg = mg_mk_str("Bad Request");
+	string resp_status_msg;
+	if(resp_code == 400)
+		resp_status_msg = "Bad Request";
 	else
-		response.resp_status_msg = mg_mk_str("OK");
+		resp_status_msg = "OK";
 
-	/* Optional for Debugging
-	vector<wstring> keys = value->ObjectKeys();
-	wstring s;
-	for (vector<wstring>::iterator it = keys.begin(); it != keys.end(); ++it){
-		s = *it;
-		wcout << "KEY: " << s << endl;
-		wcout << "VALUE: " << root[s]->AsNumber() << endl;
-	}
+	// build header
+	string headers_string = "Content-Length: " 
+		+ to_string(payload.length())
+		+ "\r\n"
+		+ "Content-Type: application/json";
 
-	cout << "HEREWEGO: " << root[L"node_id"]->AsNumber() << endl;
-	*/
+	// build text to send
+	string to_send = proto
+		+ " "
+		+ to_string(resp_code)
+		+ " "
+		+ resp_status_msg
+		+ "\r\n"
+		+ headers_string;
+	if(payload != "")
+		to_send = to_send + "\r\n\r\n" + payload;
+	
+	to_send += "\r\n";
 
-	return response;
+	return to_send;
 }
 
 // event handler
 static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
 	struct http_message *hm = (struct http_message *) ev_data;
 	struct mbuf *io = &nc->recv_mbuf;
-	struct mbuf *out = &nc->send_mbuf;
 	switch (ev) {
 		case MG_EV_HTTP_REQUEST:
 			{
-				struct http_message resp = handle_request(
+				string to_send = handle_request(
 						mg_str_to_string(hm->body), mg_str_to_string(hm->uri));
 				
-				// build header
-				string headers_string = "Content-Length: " 
-					+ to_string(resp.body.len)
-					+ "\r\n"
-					+ "Content-Type: application/json";
-
-				// build text to send
-				string to_send = mg_str_to_string(resp.proto)
-					+ " "
-					+ to_string(resp.resp_code)
-					+ " "
-					+ mg_str_to_string(resp.resp_status_msg)
-					+ "\r\n"
-					+ headers_string;
-				if(resp.body.p != NULL)
-					to_send = to_send + "\r\n\r\n" + mg_str_to_string(resp.body);
-				
-				to_send += "\r\n";
-
 				//send it
 				mg_send(nc, to_send.c_str(), to_send.length());
 
-				// debug!
-				cout << "BEGIN RESPONSE" << endl;
-				cout << to_send << endl;
-				cout << "END RESPONSE" << endl;
+				// debug mode!
+				if(DEBUG){
+					cout << "Response sent:" << endl;
+					cout << to_send << endl;
+				}
 
 				// close the connection!
 				nc->flags |= MG_F_SEND_AND_CLOSE;
