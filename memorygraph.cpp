@@ -251,14 +251,16 @@ void print_graph(){
 int x_main(void) {
 	cout << add_node(5) << '\n';
 	print_graph();
-	cout << '\b';
+	cout << '\n';
 	cout << add_node(10) << '\n';
 	cout << add_node(15) << '\n';
 	cout << add_node(10) << '\n';
+	cout << add_node(11) << '\n';
 	cout << add_node(25) << '\n';
 	cout << add_edge(10,10) << '\n';
 	cout << add_edge(10,20) << '\n';
 	cout << "I AM HERE\n";
+	cout << add_edge(10,15) << '\n';
 	cout << add_edge(10,15) << '\n';
 	cout << add_edge(25,15) << '\n';
 	cout << "I AM HERE TOO \n";
@@ -269,6 +271,10 @@ int x_main(void) {
 	cout << "Removed edge: \n";
 	print_graph();
 	cout << '\n';
+	cout << remove_edge(20,15) << '\n';
+	cout << remove_edge(15,15) << '\n';
+	cout << remove_edge(10,11) << '\n';
+	cout << remove_edge(25,15) << '\n';
 	cout << remove_node(15) << '\n';
 	cout << "Removed node: \n";
 	print_graph();
@@ -293,7 +299,30 @@ int x_main(void) {
 	cout << add_edge(30,35) << '\n';
 	cout << "Shortest path from 15 to 35: " << shortest_path(15,35).distance << '\n';
 	cout << "Shortest path status from 15 to 35: " << shortest_path(15,35).status << '\n';
+	cout << "Shortest path from 15 to 15: " << shortest_path(15,15).distance << '\n';
+	cout << "Shortest path status from 15 to 15: " << shortest_path(15,15).status << '\n';
+	cout << "Shortest path from 15 to 5: " << shortest_path(15,5).distance << '\n';
+	cout << "Shortest path status from 15 to 5: " << shortest_path(15,5).status << '\n';
+	cout << "Shortest path from 1 to 5: " << shortest_path(1,5).distance << '\n';
+	cout << "Shortest path status from 1 to 5: " << shortest_path(1,5).status << '\n';
+	cout << "Shortest path from 1 to 5: " << shortest_path(5,1).distance << '\n';
+	cout << "Shortest path status from 1 to 5: " << shortest_path(5,1).status << '\n';
 	print_nodes();
 	print_graph();
+<<<<<<< HEAD
 	return 0;
+=======
+	cout << get_neighbors(20).status << '\n';
+	for(uint64_t a : get_neighbors(20).neighbors) {
+		cout << "neighbor: " << a << '\n';
+	}
+	cout << get_neighbors(5).status << '\n';
+	for(uint64_t a : get_neighbors(5).neighbors) {
+		cout << "neighbor: " << a << '\n';
+	}
+	cout << get_neighbors(1).status << '\n';
+	for(uint64_t a : get_neighbors(1).neighbors) {
+		cout << "neighbor: " << a << '\n';
+	}
+>>>>>>> e0ac76a91faf80f8e1f115d5b0dcd9892f3fcb8c
 }
