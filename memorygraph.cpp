@@ -309,9 +309,7 @@ int x_main(void) {
 	cout << "Shortest path status from 1 to 5: " << shortest_path(5,1).status << '\n';
 	print_nodes();
 	print_graph();
-<<<<<<< HEAD
 	return 0;
-=======
 	cout << get_neighbors(20).status << '\n';
 	for(uint64_t a : get_neighbors(20).neighbors) {
 		cout << "neighbor: " << a << '\n';
@@ -324,5 +322,5 @@ int x_main(void) {
 	for(uint64_t a : get_neighbors(1).neighbors) {
 		cout << "neighbor: " << a << '\n';
 	}
->>>>>>> e0ac76a91faf80f8e1f115d5b0dcd9892f3fcb8c
+	return 0;
 }
