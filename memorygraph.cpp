@@ -201,7 +201,6 @@ struct distanceData shortest_path(uint64_t node_a_id, uint64_t node_b_id) {
 	struct traversedNode first;
 	first.id = node_a_id;
 	first.distance = 0;
-	int currDist = 1;
 	traversal.push(first);
 	seen.insert(first.id);
 	while(!traversal.empty()) {
@@ -218,12 +217,11 @@ struct distanceData shortest_path(uint64_t node_a_id, uint64_t node_b_id) {
 			if(seen.find(adjNode) == seen.end()){
 				struct traversedNode newNode;
 				newNode.id = adjNode;
-				newNode.distance = currDist;
+				newNode.distance = curr.distance + 1;
 				traversal.push(newNode);
 				seen.insert(adjNode);
 			}
 		}
-		currDist++;
 	}
 
 	// Nodes are not connected
@@ -322,5 +320,26 @@ int main(void) {
 	for(uint64_t a : get_neighbors(1).neighbors) {
 		cout << "neighbor: " << a << '\n';
 	}
+
+
+	cout << add_node(1) << '\n';
+	cout << add_node(2) << '\n';
+	cout << add_node(3) << '\n';
+	cout << add_node(4) << '\n';
+	cout << add_node(5) << '\n';
+	cout << add_node(6) << '\n';
+	cout << add_node(7) << '\n';
+	cout << add_node(8) << '\n';
+	cout << add_node(9) << '\n';
+	cout << add_node(0) << '\n';
+	cout << add_edge(1,2) << '\n';
+	cout << add_edge(1,3) << '\n';
+	cout << add_edge(1,4) << '\n';
+	cout << add_edge(1,6) << '\n';
+	cout << add_edge(1,7) << '\n';
+	cout << add_edge(1,8) << '\n';
+	cout << add_edge(1,9) << '\n';
+	cout << add_edge(3,5) << '\n';
+	cout << add_edge(0,5) << '\n';
 	return 0;
 }
