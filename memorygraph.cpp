@@ -246,7 +246,7 @@ void print_graph(){
 	}
 }
 
-int main(void) {
+int x_main(void) {
 	cout << add_node(5) << '\n';
 	print_graph();
 	cout << '\n';
