@@ -307,7 +307,7 @@ int main(void) {
 	cout << "Shortest path status from 1 to 5: " << shortest_path(5,1).status << '\n';
 	print_nodes();
 	print_graph();
-	return 0;
+
 	cout << get_neighbors(20).status << '\n';
 	for(uint64_t a : get_neighbors(20).neighbors) {
 		cout << "neighbor: " << a << '\n';
@@ -321,12 +321,12 @@ int main(void) {
 		cout << "neighbor: " << a << '\n';
 	}
 
+	cout << '\n';
 
 	cout << add_node(1) << '\n';
 	cout << add_node(2) << '\n';
 	cout << add_node(3) << '\n';
 	cout << add_node(4) << '\n';
-	cout << add_node(5) << '\n';
 	cout << add_node(6) << '\n';
 	cout << add_node(7) << '\n';
 	cout << add_node(8) << '\n';
@@ -341,5 +341,6 @@ int main(void) {
 	cout << add_edge(1,9) << '\n';
 	cout << add_edge(3,5) << '\n';
 	cout << add_edge(0,5) << '\n';
+	cout << shortest_path(3,0).distance << '\n';
 	return 0;
 }
