@@ -1,7 +1,7 @@
 CC = g++
 CFLAGS = -std=c++11 -pedantic -Wall -I ./include -g
 
-all: memorygraph main
+all: main
 
 memorygraph: memorygraph.cpp memorygraph.hpp
 	${CC} ${CFLAGS} memorygraph.cpp -o build/$@
