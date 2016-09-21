@@ -36,7 +36,7 @@ string json_to_string(JSONObject j){
 	return str;
 }
 
-// handle an incoming api cal
+// handle an incoming api call
 string handle_request(string body, string uri){
 	JSONValue *value;
 	JSONObject root;
