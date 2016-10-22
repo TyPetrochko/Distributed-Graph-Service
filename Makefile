@@ -15,7 +15,7 @@ clean:
 	$(RM) cs426_graph_server memorygraph
 
 run: main
-	./cs426_graph_server 8080
+	./cs426_graph_server 8080 potato
 
 test:
 	/c/cs426/scripts/lab1test.sh http://127.0.0.1:8080

@@ -5,22 +5,41 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include "mongoose.h"
-#include "memorygraph.hpp"
-#include "JSON.h"
 #include <stdlib.h>
+
+#include "JSON.h"
+#include "mongoose.h"
+
+#include "persistence.hpp"
+#include "memorygraph.hpp"
+
 using namespace std;
 
 // default error message
 string err_msg = string("HTTP/1.1 400 Bad Request\r\n")
-+ "Content-Length: 0\r\n"
-+	"Content-Type: application/json\r\n";
+  + "Content-Length: 0\r\n"
+  +	"Content-Type: application/json\r\n";
 
-void check_args(int argc){
-	if (argc < 2){
-		cerr << "Usage: ./cs426_graph_server <port>" << endl;
+// flags to read in
+char* port;
+bool format;
+string dev_file;
+
+void process_args(int argc, char **argv){
+	if (argc < 3){
+		cerr << "Usage: ./cs426_graph_server [-f] <port> <devfile>" << endl;
 		exit(1);
 	}
+
+  if(argc == 3){
+    format = false;
+    port = argv[1];
+    dev_file = string(argv[2]);
+  }else if (argc == 4){
+    format = true;
+    port = argv[2];
+    dev_file = string(argv[3]);
+  }
 }
 
 // convert mongoose's weird string struct to a regular c++ string
@@ -197,7 +216,9 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
 }
 
 int main(int argc, char *argv[]){
-	check_args(argc);
+  process_args(argc, argv);
+
+  init(dev_file, format);
 
 	struct mg_connection *nc;
 	struct mg_mgr mgr;
@@ -205,7 +226,7 @@ int main(int argc, char *argv[]){
 
   // Note that many connections can be added to a single event manager
   // Connections can be created at any point, e.g. in event handler function
-  nc = mg_bind(&mgr, argv[1], ev_handler);
+  nc = mg_bind(&mgr, port, ev_handler);
 	
 	// listen for http
 	mg_set_protocol_http_websocket(nc);

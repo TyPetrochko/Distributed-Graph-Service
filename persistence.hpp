@@ -12,7 +12,7 @@ typedef struct operation {
 
 // Call when starting up. Formats the disk, generation number etc. Return true
 // if successful (can only fail if format is false).
-bool init(string file, bool format);
+bool init(string dev_file, bool format);
 
 // Logs a COMPLETED operation. Do not log failed operations.
 void log(operation op);
