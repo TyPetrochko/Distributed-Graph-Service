@@ -29,8 +29,13 @@ using namespace std;
 
 static int fildes;
 
+// Check a block's checksum
 bool checksum(unsigned int block);
+
+// Format a disk
 void format_disk();
+
+// Restore the graph from disk
 void restore_graph();
 
 // Struct representing a log entry (to be serialized)
@@ -142,6 +147,7 @@ void format_disk(){
 }
 
 void restore_graph(){
+  // TODO
 }
 
 void log(operation op){
