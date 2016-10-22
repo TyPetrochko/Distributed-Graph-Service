@@ -219,7 +219,7 @@ int main(int argc, char *argv[]){
   process_args(argc, argv);
 
   init(dev_file, format);
-
+  test();
 	struct mg_connection *nc;
 	struct mg_mgr mgr;
 	mg_mgr_init(&mgr, NULL);  // Initialize event manager object
