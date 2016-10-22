@@ -15,7 +15,7 @@ using std::cout;
 using std::pair;
 using std::queue;
 
-static unordered_map<uint64_t,list<uint64_t> > adjacencyList;
+static unordered_map<uint64_t,list<uint64_t>> adjacencyList;
 
 static unordered_set<uint64_t> nodes;
 
