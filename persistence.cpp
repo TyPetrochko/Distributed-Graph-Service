@@ -61,6 +61,9 @@ bool init(string dev_file, bool format){
     cout << "\tDev file: " << dev_file << endl;
     cout << "\tFormat?: " << format << endl;
     cout << "\tPage size: " << sysconf(_SC_PAGE_SIZE) << endl;
+    cout << "\tLblock size: " << sizeof(l_block) << endl;
+    cout << "\tSblock size: " << sizeof(s_block) << endl;
+    cout << "\tLog Entry size: " << sizeof(log_entry) << endl;
   }
 
   // open the dev file
@@ -132,6 +135,15 @@ void log(log_entry entry){
 
   if(pwrite(fildes, l, BLOCK_SIZE, log_size * BLOCK_SIZE) < BLOCK_SIZE)
     DIE("Couldn't write to block " + log_size);
+
+  uint64_t *data = (uint64_t*) l;
+  if((data[0] ^ get_checksum(data)) != 0)
+    DIE("Bad in-memory checksum after writing log entry");
+
+  if(!checksum(log_size)) // TODO remove this!
+    DIE("Bad checksum after writing log entry");
+
+  free_block(l);
 }
 
 // Read log metadata from disk to memory
@@ -175,7 +187,10 @@ void restore_graph(){
   load_checkpoint();
 
   // iterate over every log block
-  for(unsigned int i = 1; i < log_size; i++){
+  for(unsigned int i = 1; i <= log_size; i++){
+
+    if(VERBOSE) DEBUG("On block " << i);
+
     if(!checksum(i))
       DIE("Block " << i << " corrupted!");
 
@@ -207,7 +222,7 @@ void test(){
   DEBUG("Testing...");
 
   // make nodes 0 - 999
-  for(int i = 0; i < 1000; i++){
+  for(unsigned int i = 0; i < 100; i++){
     log_entry le;
 
     le.opcode = 0;
@@ -216,62 +231,62 @@ void test(){
     log(le);
   }
 
-  // chain nodes 0-99 to successor
-  for(int i = 0; i < 100; i++){
-    log_entry le;
+  // // chain nodes 0-99 to successor
+  // for(int i = 0; i < 100; i++){
+  //   log_entry le;
 
-    le.opcode = 1;
-    le.node_a = i;
-    le.node_b = i + 1;
+  //   le.opcode = 1;
+  //   le.node_a = i;
+  //   le.node_b = i + 1;
 
-    log(le);
-  }
+  //   log(le);
+  // }
 
-  // delete the first ten edges
-  for(int i = 0; i < 10; i++){
-    log_entry le;
+  // // delete the first ten edges
+  // for(int i = 0; i < 10; i++){
+  //   log_entry le;
 
-    le.opcode = 3;
-    le.node_a = i;
-    le.node_b = i + 1;
+  //   le.opcode = 3;
+  //   le.node_a = i;
+  //   le.node_b = i + 1;
 
-    log(le);
-  }
+  //   log(le);
+  // }
 
-  // delete the last ten nodes
-  for(int i = 990; i < 1000; i++){
-    log_entry le;
+  // // delete the last ten nodes
+  // for(int i = 990; i < 1000; i++){
+  //   log_entry le;
 
-    le.opcode = 2;
-    le.node_a = i;
+  //   le.opcode = 2;
+  //   le.node_a = i;
 
-    log(le);
-  }
+  //   log(le);
+  // }
 
   // hopefully this works!
   DEBUG("Restoring graph...");
   restore_graph();
 
-  for(int i = 0; i < 990; i++){
+  for(int i = 0; i < 100; i++){
     if(!get_node(i).in_graph)
       DEBUG("Error: node " << i << " not in graph!");
   }
   
-  for(int i = 990; i < 1000; i++){
-    if(get_node(i).in_graph)
-      DEBUG("Error: node " << i << " in graph!");
-  }
+  // for(int i = 990; i < 1000; i++){
+  //   if(get_node(i).in_graph)
+  //     DEBUG("Error: node " << i << " in graph!");
+  // }
 
-  for(int i = 0; i < 10; i++){
-    if(get_edge(i, i + 1).in_graph)
-      DEBUG("Error: edge " << i << ", " << i + 1 << " in graph!");
-  }
+  // for(int i = 0; i < 10; i++){
+  //   if(get_edge(i, i + 1).in_graph)
+  //     DEBUG("Error: edge " << i << ", " << i + 1 << " in graph!");
+  // }
  
-  // Recall that the 990'th node was deleted...
-  for(int i = 0; i < 989; i++){
-    if(!get_edge(i, i + 1).in_graph)
-      DEBUG("Error: edge " << i << ", " << i + 1 << " not in graph!");
-  }
+  // // Recall that the 990'th node was deleted...
+  // for(int i = 0; i < 989; i++){
+  //   if(!get_edge(i, i + 1).in_graph)
+  //     DEBUG("Error: edge " << i << ", " << i + 1 << " not in graph!");
+  // }
 
   DEBUG("Testing done!");
 }
