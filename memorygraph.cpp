@@ -24,6 +24,15 @@ struct traversedNode {
 	uint64_t distance;
 };
 
+// Used for persistence
+unordered_map<uint64_t, list<uint64_t>> *get_adjacency_list(){
+  return &adjacencyList;
+}
+
+unordered_set<uint64_t> *get_nodes(){
+  return &nodes;
+}
+
 int add_node(uint64_t node_id) {
 	if(get_node(node_id).in_graph) {
 		// Node already in graph

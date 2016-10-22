@@ -1,6 +1,10 @@
+#include <unordered_map>
+#include <unordered_set>
 #include <cstdint>
 #include <list>
 
+using std::unordered_map;
+using std::unordered_set;
 using std::list;
 
 struct nodeData {
@@ -17,6 +21,10 @@ struct distanceData {
 	uint64_t distance;
 	int status;
 };
+
+unordered_map<uint64_t, list<uint64_t>> *get_adjacency_list(void);
+
+unordered_set<uint64_t> *get_nodes(void);
 
 int add_node(uint64_t node_id);
 
