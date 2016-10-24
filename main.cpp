@@ -84,38 +84,47 @@ string handle_request(string body, string uri){
 	// giant pseudo-switch statement to actually call the API
 	if(func == "add_node" && root[L"node_id"] && root[L"node_id"]->IsNumber()){
 		resp_code = add_node(root[L"node_id"]->AsNumber());
+    if(!log_add_node(root[L"node_id"]->AsNumber()))
+      resp_code = 507;
+    else
+      resp_code = add_node(root[L"node_id"]->AsNumber());
 		if(resp_code == 200) payload = body;
-    log_add_node(root[L"node_id"]->AsNumber());
 	}else if (func == "add_edge" 
 			&& root[L"node_a_id"]
 			&& root[L"node_b_id"]
 			&& root[L"node_a_id"]->IsNumber() 
 			&& root[L"node_b_id"]->IsNumber()){
-		resp_code = add_edge(
-				root[L"node_a_id"]->AsNumber(),
-				root[L"node_b_id"]->AsNumber());
-		if(resp_code == 200) payload = body;
-    log_add_edge(
+    if(!log_add_edge(
         root[L"node_a_id"]->AsNumber(),
-        root[L"node_b_id"]->AsNumber());
+        root[L"node_b_id"]->AsNumber()))
+      resp_code = 507;
+    else
+      resp_code = add_edge(
+          root[L"node_a_id"]->AsNumber(),
+          root[L"node_b_id"]->AsNumber());
+		if(resp_code == 200) payload = body;
 	}else if (func == "remove_node" 
 			&& root[L"node_id"] 
 			&& root[L"node_id"]->IsNumber()){
-		resp_code = remove_node(root[L"node_id"]->AsNumber());
+    if(!log_remove_node(root[L"node_id"]->AsNumber()))
+      resp_code = 507;
+    else
+      resp_code = remove_node(root[L"node_id"]->AsNumber());
 		if(resp_code == 200) payload = body;
-    log_remove_node(root[L"node_id"]->AsNumber());
 	}else if (func == "remove_edge"
 			&& root[L"node_a_id"]
 			&& root[L"node_b_id"]
 			&& root[L"node_a_id"]->IsNumber() 
 			&& root[L"node_b_id"]->IsNumber()){
-		resp_code = remove_edge(
-				root[L"node_a_id"]->AsNumber(),
-				root[L"node_b_id"]->AsNumber());
-		if(resp_code == 200) payload = body;
-    log_remove_edge(
+    if(!log_remove_edge(
         root[L"node_a_id"]->AsNumber(),
-        root[L"node_b_id"]->AsNumber());
+        root[L"node_b_id"]->AsNumber()))
+      resp_code = 507;
+    else
+      resp_code = remove_edge(
+          root[L"node_a_id"]->AsNumber(),
+          root[L"node_b_id"]->AsNumber());
+		if(resp_code == 200) payload = body;
 	}else if (func == "get_node" 
 			&& root[L"node_id"] 
 			&& root[L"node_id"]->IsNumber()){

@@ -7,8 +7,8 @@
 // In number of blocks:
 #define MAX_LOG 524287
 #define MAX_CHECKPOINT 2621440
-#define LOG_SIZE 10
-#define CHECKPOINT_SIZE 100
+#define LOG_SIZE MAX_LOG
+#define CHECKPOINT_SIZE MAX_CHECKPOINT
 
 #define VERBOSE false
 
@@ -28,6 +28,9 @@ bool init(string dev_file, bool format);
 // Logs a COMPLETED operation. Ideally, don't log failed operations...
 // In reality, as long as it ALSO fails on restore_graph() it's ok.
 void log(log_entry op);
+
+// Is the log currently full?
+bool log_full();
 
 // Checkpoint the graph, clear the log, return true if successful.
 bool checkpoint();

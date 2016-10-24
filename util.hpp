@@ -39,8 +39,8 @@ void redo_operation(log_entry entry);
 void logop(log_entry entry);
 
 // Log some ops using persistence.cpp
-void log_add_node(uint64_t node);
-void log_add_edge(uint64_t node_a, uint64_t node_b);
-void log_remove_node(uint64_t node);
-void log_remove_edge(uint64_t node_a, uint64_t node_b);
+bool log_add_node(uint64_t node);
+bool log_add_edge(uint64_t node_a, uint64_t node_b);
+bool log_remove_node(uint64_t node);
+bool log_remove_edge(uint64_t node_a, uint64_t node_b);
 

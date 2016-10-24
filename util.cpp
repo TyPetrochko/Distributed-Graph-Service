@@ -111,16 +111,23 @@ void logop(log_entry entry){
   }
 }
 
-void log_add_node(uint64_t node){
+bool log_add_node(uint64_t node){
+  if(log_full())
+    return false;
+  
   log_entry le;
 
   le.opcode = 0;
   le.node_a = node;
 
   log(le);
+  return true;
 }
 
-void log_add_edge(uint64_t node_a, uint64_t node_b){
+bool log_add_edge(uint64_t node_a, uint64_t node_b){
+  if(log_full())
+    return false;
+  
   log_entry le;
 
   le.opcode = 1;
@@ -128,18 +135,26 @@ void log_add_edge(uint64_t node_a, uint64_t node_b){
   le.node_b = node_b;
 
   log(le);
+  return true;
 }
 
-void log_remove_node(uint64_t node){
+bool log_remove_node(uint64_t node){
+  if(log_full())
+    return false;
+  
   log_entry le;
 
   le.opcode = 2;
   le.node_a = node;
 
   log(le);
+  return true;
 }
 
-void log_remove_edge(uint64_t node_a, uint64_t node_b){
+bool log_remove_edge(uint64_t node_a, uint64_t node_b){
+  if(log_full())
+    return false;
+  
   log_entry le;
 
   le.opcode = 3;
@@ -147,5 +162,6 @@ void log_remove_edge(uint64_t node_a, uint64_t node_b){
   le.node_b = node_b;
 
   log(le);
+  return true;
 }
 

@@ -120,7 +120,7 @@ void log(log_entry entry){
 
   // last log block full - make another and update superblock!
   if(l->num_entries == LOG_ENTRIES_PER_BLOCK){
-    DEBUG("Making a new block for logs!");
+    if(VERBOSE) DEBUG("Making a new block for logs!");
     log_size++;
     format_superblock();
     free_block(l);
@@ -137,6 +137,23 @@ void log(log_entry entry){
     DIE("Couldn't write to block " << log_size);
   
   free_block(l);
+}
+
+bool log_full(){
+  if(log_size < LOG_SIZE)
+    return false;
+  else if(log_size > LOG_SIZE)
+    DIE("Somehow log size " << log_size << " exceeds the max?");
+
+  bool is_full;
+
+  l_block *l = (l_block*) get_block(log_size);
+
+  is_full = (l->num_entries == LOG_ENTRIES_PER_BLOCK);
+
+  free_block(l);
+
+  return is_full;
 }
 
 // Read log metadata from disk to memory
