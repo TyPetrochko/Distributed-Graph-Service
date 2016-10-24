@@ -25,7 +25,8 @@ typedef struct log_entry {
 // if successful (can only fail if format is false).
 bool init(string dev_file, bool format);
 
-// Logs a COMPLETED operation. Do not log failed operations.
+// Logs a COMPLETED operation. Ideally, don't log failed operations...
+// In reality, as long as it ALSO fails on restore_graph() it's ok.
 void log(log_entry op);
 
 // Checkpoint the graph, clear the log, return true if successful.

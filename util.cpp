@@ -54,6 +54,14 @@ void *get_block(unsigned int block){
   return block_data;
 }
 
+// Write a block to disk at a certain index. Does not free the mmapped block!
+bool write_block(void *block_data, unsigned int index){
+  if(pwrite(fildes, block_data, BLOCK_SIZE, BLOCK_SIZE * index) < BLOCK_SIZE)
+    return false;
+
+  return true;
+}
+
 // Free a mmapped block
 void free_block(void *block){
   if(munmap(block, BLOCK_SIZE) == -1)
@@ -101,5 +109,43 @@ void logop(log_entry entry){
     default:
       DIE("Not a valid opcode: " << entry.opcode);
   }
+}
+
+void log_add_node(uint64_t node){
+  log_entry le;
+
+  le.opcode = 0;
+  le.node_a = node;
+
+  log(le);
+}
+
+void log_add_edge(uint64_t node_a, uint64_t node_b){
+  log_entry le;
+
+  le.opcode = 1;
+  le.node_a = node_a;
+  le.node_b = node_b;
+
+  log(le);
+}
+
+void log_remove_node(uint64_t node){
+  log_entry le;
+
+  le.opcode = 2;
+  le.node_a = node;
+
+  log(le);
+}
+
+void log_remove_edge(uint64_t node_a, uint64_t node_b){
+  log_entry le;
+
+  le.opcode = 3;
+  le.node_a = node_a;
+  le.node_b = node_b;
+
+  log(le);
 }
 

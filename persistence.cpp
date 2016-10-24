@@ -72,7 +72,7 @@ bool init(string dev_file, bool format){
     DIE("Could not open " + dev_file);
   
   if(!format){
-    if(checksum(0))
+    if(!checksum(0))
       DIE("Dev file not formatted and no -f flag! Aborting...");
     initialize_log();
     restore_graph();
@@ -93,7 +93,7 @@ void format_superblock(){
  
   super->checksum = get_checksum(super);
 
-  if(pwrite(fildes, super, BLOCK_SIZE, 0) < BLOCK_SIZE)
+  if(!write_block(super, 0))
     DIE("Couldn't write to block zero");
 
   free_block(super);
@@ -133,7 +133,7 @@ void log(log_entry entry){
   l->num_entries++;
   l->checksum = get_checksum(l);
 
-  if(pwrite(fildes, l, BLOCK_SIZE, log_size * BLOCK_SIZE) < BLOCK_SIZE)
+  if(!write_block(l, log_size))
     DIE("Couldn't write to block " << log_size);
   
   free_block(l);
@@ -166,7 +166,7 @@ void create_lblock(unsigned int block){
 
   l->checksum = get_checksum(l);
 
-  if(pwrite(fildes, l, BLOCK_SIZE, block * BLOCK_SIZE) < BLOCK_SIZE)
+  if(!write_block(l, block))
     DIE("Couldn't write to block " + block);
 
   free_block(l);
@@ -263,25 +263,25 @@ void test(){
 
   for(int i = 0; i < 100; i++){
     if(!get_node(i).in_graph)
-      DEBUG("Error: node " << i << " not in graph!");
+      DIE("Error: node " << i << " not in graph!");
   }
   
   for(int i = 990; i < 1000; i++){
     if(get_node(i).in_graph)
-      DEBUG("Error: node " << i << " in graph!");
+      DIE("Error: node " << i << " in graph!");
   }
 
   for(int i = 0; i < 10; i++){
     if(get_edge(i, i + 1).in_graph)
-      DEBUG("Error: edge " << i << ", " << i + 1 << " in graph!");
+      DIE("Error: edge " << i << ", " << i + 1 << " in graph!");
   }
  
   // Recall that the 990'th node was deleted...
   for(int i = 10; i < 99; i++){
     if(!get_edge(i, i + 1).in_graph)
-      DEBUG("Error: edge " << i << ", " << i + 1 << " not in graph!");
+      DIE("Error: edge " << i << ", " << i + 1 << " not in graph!");
   }
 
-  DEBUG("Testing done!");
+  DEBUG("All tests passed!");
 }
 

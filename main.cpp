@@ -1,6 +1,5 @@
 /* Much of this code is adapted from the mongoose examples page,
  * https://docs.cesanta.com/mongoose/dev/#/usage-example/ */
-#define DEBUG (false)
 
 #include <iostream>
 #include <vector>
@@ -12,6 +11,7 @@
 
 #include "persistence.hpp"
 #include "memorygraph.hpp"
+#include "util.hpp"
 
 using namespace std;
 
@@ -85,6 +85,7 @@ string handle_request(string body, string uri){
 	if(func == "add_node" && root[L"node_id"] && root[L"node_id"]->IsNumber()){
 		resp_code = add_node(root[L"node_id"]->AsNumber());
 		if(resp_code == 200) payload = body;
+    log_add_node(root[L"node_id"]->AsNumber());
 	}else if (func == "add_edge" 
 			&& root[L"node_a_id"]
 			&& root[L"node_b_id"]
@@ -94,11 +95,15 @@ string handle_request(string body, string uri){
 				root[L"node_a_id"]->AsNumber(),
 				root[L"node_b_id"]->AsNumber());
 		if(resp_code == 200) payload = body;
+    log_add_edge(
+        root[L"node_a_id"]->AsNumber(),
+        root[L"node_b_id"]->AsNumber());
 	}else if (func == "remove_node" 
 			&& root[L"node_id"] 
 			&& root[L"node_id"]->IsNumber()){
 		resp_code = remove_node(root[L"node_id"]->AsNumber());
 		if(resp_code == 200) payload = body;
+    log_remove_node(root[L"node_id"]->AsNumber());
 	}else if (func == "remove_edge"
 			&& root[L"node_a_id"]
 			&& root[L"node_b_id"]
@@ -108,6 +113,9 @@ string handle_request(string body, string uri){
 				root[L"node_a_id"]->AsNumber(),
 				root[L"node_b_id"]->AsNumber());
 		if(resp_code == 200) payload = body;
+    log_remove_edge(
+        root[L"node_a_id"]->AsNumber(),
+        root[L"node_b_id"]->AsNumber());
 	}else if (func == "get_node" 
 			&& root[L"node_id"] 
 			&& root[L"node_id"]->IsNumber()){
@@ -178,7 +186,8 @@ string handle_request(string body, string uri){
 		+ resp_status_msg
 		+ "\r\n"
 		+ headers_string;
-	if(payload != "")
+
+  if(payload != "")
 		to_send = to_send + "\r\n\r\n" + payload;
 	
 	to_send += "\r\n";
@@ -199,12 +208,6 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
 				//send it
 				mg_send(nc, to_send.c_str(), to_send.length());
 
-				// debug mode!
-				if(DEBUG){
-					cout << "Response sent:" << endl;
-					cout << to_send << endl;
-				}
-
 				// close the connection!
 				nc->flags |= MG_F_SEND_AND_CLOSE;
 				mbuf_remove(io, io->len);
@@ -219,8 +222,8 @@ int main(int argc, char *argv[]){
   process_args(argc, argv);
 
   init(dev_file, format);
-  test();
-	struct mg_connection *nc;
+	
+  struct mg_connection *nc;
 	struct mg_mgr mgr;
 	mg_mgr_init(&mgr, NULL);  // Initialize event manager object
 

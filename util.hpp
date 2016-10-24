@@ -5,10 +5,13 @@
 
 // Super helpful for debugging
 #define DBG true
-#define DEBUG(MSG) (cout << __FILE__ << ":" << __LINE__ << " " << MSG\
-    << endl)
-#define DIE(MSG) {cout << __FILE__ << ":" << __LINE__ << " " << MSG << endl; \
-  exit(1);}
+#define DEBUG(MSG) { \
+  cout << __FILE__ << ":" << __LINE__ << " " << MSG << endl; \
+}
+#define DIE(MSG) { \
+  cout << __FILE__ << ":" << __LINE__ << " " << MSG << endl; \
+  exit(1); \
+}
 
 
 // File descriptor
@@ -23,6 +26,9 @@ uint64_t get_checksum (void *block_data);
 // Return a mmapped block
 void *get_block(unsigned int block);
 
+// Write a block to disk at a certain index. Does not free the mmapped block!
+bool write_block(void *block_data, unsigned int index);
+
 // Free an mmapped block
 void free_block(void *block);
 
@@ -31,4 +37,10 @@ void redo_operation(log_entry entry);
 
 // Log an op (only do this if VERBOSE == true)
 void logop(log_entry entry);
+
+// Log some ops using persistence.cpp
+void log_add_node(uint64_t node);
+void log_add_edge(uint64_t node_a, uint64_t node_b);
+void log_remove_node(uint64_t node);
+void log_remove_edge(uint64_t node_a, uint64_t node_b);
 
