@@ -2,7 +2,7 @@
 #include <string>
 
 #define BLOCK_SIZE 4096
-#define LOG_ENTRIES_PER_BLOCK 204
+#define LOG_ENTRIES_PER_BLOCK 170
 
 // In number of blocks:
 #define MAX_LOG 524287
