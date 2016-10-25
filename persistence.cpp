@@ -51,6 +51,12 @@ typedef struct l_block {
   log_entry entries[LOG_ENTRIES_PER_BLOCK];
 } l_block;
 
+// Struct representing a log block
+typedef struct edge {
+  uint64_t node_a;
+  uint64_t node_b;
+} edge;
+
 // Call when starting up. Formats the disk, generation number etc. Return true
 // if successful (can only fail if format is false).
 bool init(string dev_file, bool format){
@@ -86,7 +92,7 @@ bool init(string dev_file, bool format){
 // Update the superblock on disk to represent in-memory metadata
 void format_superblock(){
   s_block *super = (s_block*) get_block(0);
-  
+
   super->generation = generation;
   super->log_start = log_start;
   super->log_size = log_size;
@@ -104,6 +110,7 @@ void format_disk(){
   generation = 0;
   log_start = 1;
   log_size = 1;
+  checkpoint_num_edges = 0;
 
   format_superblock();
 
@@ -218,12 +225,129 @@ void restore_graph(){
 }
 
 void load_checkpoint(){
-  // TODO
+  clear_adjacency_list_and_nodes();
+
+  uint64_t *num_nodes = malloc(sizeof(uint64_t));
+  uint64_t *n = malloc(sizeof(uint64_t));
+
+  uint64_t *num_edges = malloc(sizeof(uint64_t));
+  edge *e = malloc(sizeof(edge));
+
+  unsigned int offset = 0;
+
+  ssize_t size_read = pread(fildes, (void *) num_nodes, sizeof(uint64_t), LOG_SIZE*BLOCK_SIZE);
+  if (size_read <= 0) {
+    free(num_nodes);
+    free(n);
+    free(num_edges);
+    free(e);
+    return;
+  }
+  offset++;
+
+  for (int i = 0; i < size_read; i++) {
+    size_read = pread(fildes, (void *) n, sizeof(uint64_t), LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
+    if (size_read <= 0) {
+      free(num_nodes);
+      free(n);
+      free(num_edges);
+      free(e)
+      return;
+    }
+    add_node(*n);
+    offset++;
+  }
+
+  size_read = pread(fildes, (void *) num_edges, sizeof(uint64_t), LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
+  if (size_read <= 0) {
+    free(num_nodes);
+    free(n);
+    free(num_edges);
+    free(e);
+    return;
+  }
+  offset++;
+
+  for (int i = 0; i < size_read; i++) {
+    size_read = pread(fildes, (void *) e, sizeof(edge), LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
+    if (size_read <= 0) {
+      free(num_nodes);
+      free(n);
+      free(num_edges);
+      free(e);
+      return;
+    }
+    add_edge(e->node_a,e->node_b);
+    offset += sizeof(edge);
+  }
+
+  free(num_nodes);
+  free(n);
+  free(num_edges);
+  free(e);
 }
 
 bool checkpoint(){
-  // TODO
-  return false;
+  unordered_set<uint64_t> nodes = *(get_nodes());
+  uint64_t num_nodes = (uint64_t) (*nodes).size();
+
+  // Number of edges where a < b, since each edge is stored twice
+  uint64_t num_unique_edges = (uint64_t) get_num_edges() / 2;
+
+  edge e = malloc(sizeof(edge));
+  unsigned int offset = 0;
+
+  ssize_t bytes_written = pwrite(fildes,
+                                (void *) &num_nodes,
+                                sizeof(uint64_t),
+                                LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
+  if (bytes_written <= 0) {
+    free(e);
+    return false;
+  }
+
+  offset++;
+
+  for (uint64_t node : nodes) {
+    bytes_written = pwrite(fildes,
+                                (void *) &node,
+                                sizeof(uint64_t),
+                                LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
+    if (bytes_written <= 0) {
+      free(e);
+      return false;
+    }
+    offset++;
+  }
+
+  bytes_written = pwrite(fildes,
+                                (void *) &num_unique_edges,
+                                sizeof(uint64_t),
+                                LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
+  if (bytes_written <= 0) {
+    free(e);
+    return false;
+  }
+  offset++;
+
+  for (uint64_t node : nodes) {
+    list<uint64_t> neighbors = get_neighbors(node).neighbors;
+    for (uint64_t neighbor : neighbors) {
+      e.node_a = node;
+      e.node_b = neighbor_node;
+      bytes_written = pwrite(fildes,
+                                (void *) &e,
+                                sizeof(edge),
+                                LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
+      if (bytes_written <= 0) {
+        free(e);
+        return false;
+      }
+      offset += sizeof(edge);
+    }
+  }
+  free(e);
+  return true;
 }
 
 // to run AFTER init

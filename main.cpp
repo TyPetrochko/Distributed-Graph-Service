@@ -31,15 +31,15 @@ void process_args(int argc, char **argv){
 		exit(1);
 	}
 
-  if(argc == 3){
-    format = false;
-    port = argv[1];
-    dev_file = string(argv[2]);
-  }else if (argc == 4){
-    format = true;
-    port = argv[2];
-    dev_file = string(argv[3]);
-  }
+	if (argc == 3) {
+	   	format = false;
+	    port = argv[1];
+	    dev_file = string(argv[2]);
+	} else if (argc == 4){
+	    format = true;
+	    port = argv[2];
+	    dev_file = string(argv[3]);
+	}
 }
 
 // convert mongoose's weird string struct to a regular c++ string

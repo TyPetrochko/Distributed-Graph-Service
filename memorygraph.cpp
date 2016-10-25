@@ -33,6 +33,11 @@ unordered_set<uint64_t> *get_nodes(){
   return &nodes;
 }
 
+void clear_adjacency_list_and_nodes(){
+	adjacencyList.clear();
+	nodes.clear();
+}
+
 int add_node(uint64_t node_id) {
 	if(get_node(node_id).in_graph) {
 		// Node already in graph
