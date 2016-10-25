@@ -38,6 +38,14 @@ void clear_adjacency_list_and_nodes(){
 	nodes.clear();
 }
 
+unsigned int get_num_edges() {
+	unsigned int edge_count = 0;
+	for(uint64_t node : nodes) {
+		edge_count += get_neighbors(node).neighbors.size();
+	}
+	return edge_count;
+}
+
 int add_node(uint64_t node_id) {
 	if(get_node(node_id).in_graph) {
 		// Node already in graph

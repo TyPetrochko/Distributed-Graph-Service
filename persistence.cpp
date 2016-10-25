@@ -59,8 +59,8 @@ typedef struct edge {
 
 // Call when starting up. Formats the disk, generation number etc. Return true
 // if successful (can only fail if format is false).
-bool init(string dev_file, bool format){
-  if(VERBOSE){
+bool init(string dev_file, bool format) {
+  if (VERBOSE) {
     cout << "Initializing disk... " << endl;
     cout << "\tLog (blocks): " << LOG_SIZE << endl;
     cout << "\tCheckpoint (blocks): " << CHECKPOINT_SIZE << endl;
@@ -77,12 +77,12 @@ bool init(string dev_file, bool format){
   if(fildes < 0)
     DIE("Could not open " + dev_file);
   
-  if(!format){
-    if(!checksum(0))
+  if (!format) {
+    if (!checksum(0))
       DIE("Dev file not formatted and no -f flag! Aborting...");
     initialize_log();
     restore_graph();
-  }else{
+  } else {
     format_disk();
   }
   
@@ -90,7 +90,7 @@ bool init(string dev_file, bool format){
 }
 
 // Update the superblock on disk to represent in-memory metadata
-void format_superblock(){
+void format_superblock() {
   s_block *super = (s_block*) get_block(0);
 
   super->generation = generation;
@@ -99,18 +99,17 @@ void format_superblock(){
  
   super->checksum = get_checksum(super);
 
-  if(!write_block(super, 0))
+  if (!write_block(super, 0))
     DIE("Couldn't write to block zero");
 
   free_block(super);
 }
 
 // Format the disk for the first time, and start the log!
-void format_disk(){
+void format_disk() {
   generation = 0;
   log_start = 1;
   log_size = 1;
-  checkpoint_num_edges = 0;
 
   format_superblock();
 
@@ -119,14 +118,14 @@ void format_disk(){
 }
 
 // Log a graph entry and write block back to disk
-void log(log_entry entry){
-  if(VERBOSE)
+void log(log_entry entry) {
+  if (VERBOSE)
     logop(entry);
 
   l_block *l = (l_block*) get_block(log_size);
 
   // last log block full - make another and update superblock!
-  if(l->num_entries == LOG_ENTRIES_PER_BLOCK){
+  if (l->num_entries == LOG_ENTRIES_PER_BLOCK) {
     if(VERBOSE) DEBUG("Making a new block for logs!");
     log_size++;
     format_superblock();
@@ -140,16 +139,16 @@ void log(log_entry entry){
   l->num_entries++;
   l->checksum = get_checksum(l);
 
-  if(!write_block(l, log_size))
+  if (!write_block(l, log_size))
     DIE("Couldn't write to block " << log_size);
   
   free_block(l);
 }
 
-bool log_full(){
-  if(log_size < LOG_SIZE)
+bool log_full() {
+  if (log_size < LOG_SIZE)
     return false;
-  else if(log_size > LOG_SIZE)
+  else if (log_size > LOG_SIZE)
     DIE("Somehow log size " << log_size << " exceeds the max?");
 
   bool is_full;
@@ -164,14 +163,14 @@ bool log_full(){
 }
 
 // Read log metadata from disk to memory
-void initialize_log(){
+void initialize_log() {
   s_block *super = (s_block *) get_block(0);
 
   generation = super->generation;
   log_start = super->log_start;
   log_size = super->log_size;
 
-  if(VERBOSE){
+  if (VERBOSE) {
     cout << "Reading in log..." << endl;
     cout << "\tGeneration: " << generation << endl;
     cout << "\tLog start: " << log_start << endl;
@@ -182,7 +181,7 @@ void initialize_log(){
 }
 
 // Format block as a log entry block
-void create_lblock(unsigned int block){
+void create_lblock(unsigned int block) {
   l_block *l = (l_block*) get_block(block);
 
   l->generation = generation;
@@ -190,48 +189,48 @@ void create_lblock(unsigned int block){
 
   l->checksum = get_checksum(l);
 
-  if(!write_block(l, block))
+  if (!write_block(l, block))
     DIE("Couldn't write to block " + block);
 
   free_block(l);
 
-  if(!checksum(block))
+  if (!checksum(block))
     DIE("Could not format log block " << block);
 }
 
-void restore_graph(){
+void restore_graph() {
 
   load_checkpoint();
 
   // iterate over every log block
-  for(unsigned int i = 1; i <= log_size; i++){
+  for (unsigned int i = 1; i <= log_size; i++) {
 
     if(VERBOSE) DEBUG("On block " << i);
 
-    if(!checksum(i))
+    if (!checksum(i))
       DEBUG("Block " << i << " corrupted!");
 
     l_block *l = (l_block*) get_block(i);
 
     // stop if we hit an older generation
-    if(l->generation != generation)
+    if (l->generation != generation)
       break;
 
-    for(unsigned int j = 0; j < l->num_entries; j++)
+    for (unsigned int j = 0; j < l->num_entries; j++)
       redo_operation(l->entries[j]);
 
     free_block(l);
   }
 }
 
-void load_checkpoint(){
+void load_checkpoint() {
   clear_adjacency_list_and_nodes();
 
-  uint64_t *num_nodes = malloc(sizeof(uint64_t));
-  uint64_t *n = malloc(sizeof(uint64_t));
+  uint64_t *num_nodes = (uint64_t *) malloc(sizeof(uint64_t));
+  uint64_t *n = (uint64_t *) malloc(sizeof(uint64_t));
 
-  uint64_t *num_edges = malloc(sizeof(uint64_t));
-  edge *e = malloc(sizeof(edge));
+  uint64_t *num_edges = (uint64_t *) malloc(sizeof(uint64_t));
+  edge *e = (edge *) malloc(sizeof(edge));
 
   unsigned int offset = 0;
 
@@ -251,7 +250,7 @@ void load_checkpoint(){
       free(num_nodes);
       free(n);
       free(num_edges);
-      free(e)
+      free(e);
       return;
     }
     add_node(*n);
@@ -289,12 +288,12 @@ void load_checkpoint(){
 
 bool checkpoint(){
   unordered_set<uint64_t> nodes = *(get_nodes());
-  uint64_t num_nodes = (uint64_t) (*nodes).size();
+  uint64_t num_nodes = (uint64_t) nodes.size();
 
   // Number of edges where a < b, since each edge is stored twice
   uint64_t num_unique_edges = (uint64_t) get_num_edges() / 2;
 
-  edge e = malloc(sizeof(edge));
+  edge *e = (edge *) malloc(sizeof(edge));
   unsigned int offset = 0;
 
   ssize_t bytes_written = pwrite(fildes,
@@ -333,10 +332,10 @@ bool checkpoint(){
   for (uint64_t node : nodes) {
     list<uint64_t> neighbors = get_neighbors(node).neighbors;
     for (uint64_t neighbor : neighbors) {
-      e.node_a = node;
-      e.node_b = neighbor_node;
+      e->node_a = node;
+      e->node_b = neighbor;
       bytes_written = pwrite(fildes,
-                                (void *) &e,
+                                (void *) e,
                                 sizeof(edge),
                                 LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
       if (bytes_written <= 0) {

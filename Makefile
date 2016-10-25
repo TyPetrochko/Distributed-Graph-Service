@@ -18,7 +18,7 @@ clean:
 	$(RM) cs426_graph_server memorygraph
 
 run:
-	./cs426_graph_server 8080 dev_file
+	./cs426_graph_server 8080 /dev/sda
 
 test:
 	/c/cs426/scripts/lab1test.sh http://127.0.0.1:8080
