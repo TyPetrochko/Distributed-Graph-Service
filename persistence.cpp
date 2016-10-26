@@ -288,6 +288,12 @@ void restore_graph() {
 
     free_block(l);
   }
+
+  if(VERBOSE) {
+    print_nodes();
+    print_graph();
+    cout << "nodes and graph after restore\n";
+  }
 }
 
 void load_checkpoint() {
