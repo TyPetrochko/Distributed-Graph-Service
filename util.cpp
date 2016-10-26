@@ -25,7 +25,7 @@ bool checksum(unsigned int block){
   if(munmap(block_data, BLOCK_SIZE) == -1)
     DIE("Couldn't unmap");
 
-  return chksm == 0;
+  return chksm == MAGIC_NUMBER;
 }
 
 // Get a block's checksum, excluding first uint64_t

@@ -15,6 +15,8 @@ using std::cout;
 using std::pair;
 using std::queue;
 
+#define VERBOSE true
+
 static unordered_map<uint64_t,list<uint64_t>> adjacencyList;
 
 static unordered_set<uint64_t> nodes;
@@ -23,6 +25,10 @@ struct traversedNode {
 	uint64_t id;
 	uint64_t distance;
 };
+
+void print_nodes();
+
+void print_graph();
 
 // Used for persistence
 unordered_map<uint64_t, list<uint64_t>> *get_adjacency_list(){
@@ -49,6 +55,10 @@ unsigned int get_num_edges() {
 int add_node(uint64_t node_id) {
 	if(get_node(node_id).in_graph) {
 		// Node already in graph
+		if(VERBOSE) {
+			print_graph();
+			cout << "printed graph\n";
+		}
 		return 204;
 	} else {
 		// Node not already in graph
