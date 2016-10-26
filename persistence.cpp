@@ -73,6 +73,9 @@ bool init(string dev_file, bool format) {
     cout << "\tLblock size: " << sizeof(l_block) << endl;
     cout << "\tSblock size: " << sizeof(s_block) << endl;
     cout << "\tLog Entry size: " << sizeof(log_entry) << endl;
+    print_nodes();
+    print_graph();
+    cout << "nodes and graph in init start\n";
   }
 
   // open the dev file
@@ -104,6 +107,11 @@ bool init(string dev_file, bool format) {
 
 // Update the superblock on disk to represent in-memory metadata
 void format_superblock() {
+  if(VERBOSE) {
+    print_nodes();
+    print_graph();
+    cout << "nodes and graph in format superblock\n";
+  }
   s_block *super = (s_block*) get_block(0);
 
   generation++;
@@ -122,6 +130,11 @@ void format_superblock() {
 // Format the disk and start the log! If initialized is false it is the first time.
 // Otherwise a format is called on a pre-existing memory space.
 void format_disk(bool initialized) {
+  if(VERBOSE) {
+    print_nodes();
+    print_graph();
+    cout << "nodes and graph in format disk\n";
+  }
   if (initialized) {
     log_start = 1;
     log_size = 1;

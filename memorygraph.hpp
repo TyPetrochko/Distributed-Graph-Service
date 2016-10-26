@@ -22,6 +22,10 @@ struct distanceData {
 	int status;
 };
 
+void print_nodes();
+
+void print_graph();
+
 unordered_map<uint64_t, list<uint64_t>> *get_adjacency_list(void);
 
 unsigned int get_num_edges(void);
