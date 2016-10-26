@@ -5,12 +5,13 @@
 #define LOG_ENTRIES_PER_BLOCK 170
 
 // In number of blocks:
-#define MAX_LOG 524287
+// #define MAX_LOG 524287
+#define MAX_LOG 10
 #define MAX_CHECKPOINT 2621440
 #define LOG_SIZE MAX_LOG
 #define CHECKPOINT_SIZE MAX_CHECKPOINT
 
-#define VERBOSE false
+#define VERBOSE true
 
 using namespace std;
 
@@ -32,7 +33,7 @@ void log(log_entry op);
 // Is the log currently full?
 bool log_full();
 
-// Checkpoint the graph, clear the log, return true if successful.
+// Checkpoint the graph, set the log tail to 0, and increment the generation number, return true if successful.
 bool checkpoint();
 
 // Run tests...
