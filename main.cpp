@@ -31,12 +31,20 @@ void process_args(int argc, char **argv) {
 		exit(1);
 	}
 
+	int option_char;
+
 	if (argc == 3) {
 	   	format = false;
 	    port = argv[1];
 	    dev_file = string(argv[2]);
 	} else if (argc == 4) {
-	    format = true;
+		while ((option_char = getopt(argc, argv, "f")) != EOF) {
+		    switch (option_char)
+		    {  
+		        case 'f': format = true; break;
+		        default: cerr << "Usage: ./cs426_graph_server [-f] <port> <devfile>" << endl; exit(1);
+		    }
+	    }
 	    port = argv[2];
 	    dev_file = string(argv[3]);
 	}

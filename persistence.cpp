@@ -119,7 +119,6 @@ void format_superblock() {
   }
   s_block *super = (s_block*) get_block(0);
 
-  generation++;
   super->generation = generation;
   super->log_start = log_start;
   super->log_size = log_size;
@@ -141,6 +140,7 @@ void format_disk(bool initialized) {
     cout << "nodes and graph in format disk\n";
   }
   if (initialized) {
+    generation++;
     log_start = 1;
     log_size = 1;
     format_superblock();
