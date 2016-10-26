@@ -15,7 +15,7 @@ using std::cout;
 using std::pair;
 using std::queue;
 
-#define VERBOSE false
+#define VERBOSE true
 
 static unordered_map<uint64_t,list<uint64_t>> adjacencyList;
 

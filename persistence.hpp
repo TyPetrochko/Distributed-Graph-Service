@@ -10,7 +10,7 @@
 #define LOG_SIZE MAX_LOG
 #define CHECKPOINT_SIZE MAX_CHECKPOINT
 
-#define VERBOSE false
+#define VERBOSE true
 
 using namespace std;
 
