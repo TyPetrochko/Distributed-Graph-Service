@@ -123,6 +123,8 @@ void format_superblock() {
 // Otherwise a format is called on a pre-existing memory space.
 void format_disk(bool initialized) {
   if (initialized) {
+    log_start = 1;
+    log_size = 1;
     format_superblock();
   } else {
     create_sblock();
