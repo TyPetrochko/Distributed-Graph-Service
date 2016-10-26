@@ -87,8 +87,14 @@ bool init(string dev_file, bool format) {
     restore_graph();
   } else {
     if (!checksum(0)) {
+      if(VERBOSE) {
+        cout << "formatting disk for the first time\n";
+      }
       format_disk(false);
     } else {
+      if(VERBOSE) {
+        cout << "formatting disk not for the first time\n";
+      }
       format_disk(true);
     }
   }
