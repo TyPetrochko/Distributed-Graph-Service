@@ -101,6 +101,11 @@ bool init(string dev_file, bool format) {
       format_disk(true);
     }
   }
+  if(VERBOSE) {
+    print_nodes();
+    print_graph();
+    cout << "nodes and graph in end of init\n";
+  }
   
   return false;
 }
@@ -233,7 +238,7 @@ void create_lblock(unsigned int block) {
 
   if (!checksum(block))
     DIE("Could not format log block " << block);
-  
+
   if(VERBOSE) {
     print_nodes();
     print_graph();

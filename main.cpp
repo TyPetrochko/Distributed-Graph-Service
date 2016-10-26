@@ -235,7 +235,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
 }
 
 int main(int argc, char *argv[]) {
-	clear_adjacency_list_and_nodes();
+	// clear_adjacency_list_and_nodes();
 	process_args(argc, argv);
 
 	init(dev_file, format);
@@ -250,6 +250,12 @@ int main(int argc, char *argv[]) {
 
 	// listen for http
 	mg_set_protocol_http_websocket(nc);
+
+	if(VERBOSE) {
+	  	print_nodes();
+	    print_graph();
+	    cout << "nodes and graph later in main\n";
+	}
 
 	for (;;) {  // Start infinite event loop
 		mg_mgr_poll(&mgr, 1000);
