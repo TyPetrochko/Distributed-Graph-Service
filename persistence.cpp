@@ -20,10 +20,13 @@ static unsigned int log_size;
 void format_superblock();
 
 // Format a disk
-void format_disk();
+void format_disk(bool);
 
 // Restore the graph from disk
 void restore_graph();
+
+// Create an sblock
+void create_sblock();
 
 // Create an lblock
 void create_lblock(unsigned int block);
@@ -83,7 +86,11 @@ bool init(string dev_file, bool format) {
     initialize_log();
     restore_graph();
   } else {
-    format_disk();
+    if (!checksum(0)) {
+      format_disk(false);
+    } else {
+      format_disk(true);
+    }
   }
   
   return false;
@@ -93,6 +100,7 @@ bool init(string dev_file, bool format) {
 void format_superblock() {
   s_block *super = (s_block*) get_block(0);
 
+  generation++;
   super->generation = generation;
   super->log_start = log_start;
   super->log_size = log_size;
@@ -105,13 +113,14 @@ void format_superblock() {
   free_block(super);
 }
 
-// Format the disk for the first time, and start the log!
-void format_disk() {
-  generation = 0;
-  log_start = 1;
-  log_size = 1;
-
-  format_superblock();
+// Format the disk and start the log! If initialized is false it is the first time.
+// Otherwise a format is called on a pre-existing memory space.
+void format_disk(bool initialized) {
+  if (initialized) {
+    format_superblock();
+  } else {
+    create_sblock();
+  }
 
   // start log
   create_lblock(1);
@@ -196,6 +205,25 @@ void create_lblock(unsigned int block) {
 
   if (!checksum(block))
     DIE("Could not format log block " << block);
+}
+
+// Create initialized superblock
+void create_sblock() {
+  s_block *s = (s_block*) get_block(0);
+
+  s->generation = 0;
+  s->log_start = 1;
+  s->log_size = 1;
+
+  s->checksum = get_checksum(s);
+
+  if (!write_block(s, 0))
+    DIE("Couldn't write to block " + 0);
+
+  free_block(s);
+
+  if (!checksum(0))
+    DIE("Could not format log block " << 0);
 }
 
 void restore_graph() {
@@ -309,9 +337,9 @@ bool checkpoint(){
 
   for (uint64_t node : nodes) {
     bytes_written = pwrite(fildes,
-                                (void *) &node,
-                                sizeof(uint64_t),
-                                LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
+                            (void *) &node,
+                            sizeof(uint64_t),
+                            LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
     if (bytes_written <= 0) {
       free(e);
       return false;
@@ -320,9 +348,9 @@ bool checkpoint(){
   }
 
   bytes_written = pwrite(fildes,
-                                (void *) &num_unique_edges,
-                                sizeof(uint64_t),
-                                LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
+                          (void *) &num_unique_edges,
+                          sizeof(uint64_t),
+                          LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
   if (bytes_written <= 0) {
     free(e);
     return false;
@@ -332,20 +360,24 @@ bool checkpoint(){
   for (uint64_t node : nodes) {
     list<uint64_t> neighbors = get_neighbors(node).neighbors;
     for (uint64_t neighbor : neighbors) {
-      e->node_a = node;
-      e->node_b = neighbor;
-      bytes_written = pwrite(fildes,
+      if (node < neighbor) {
+        e->node_a = node;
+        e->node_b = neighbor;
+        bytes_written = pwrite(fildes,
                                 (void *) e,
                                 sizeof(edge),
                                 LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
-      if (bytes_written <= 0) {
-        free(e);
-        return false;
+        if (bytes_written <= 0) {
+          free(e);
+          return false;
+        }
+        offset += sizeof(edge);
       }
-      offset += sizeof(edge);
     }
   }
   free(e);
+
+  format_superblock();
   return true;
 }
 
