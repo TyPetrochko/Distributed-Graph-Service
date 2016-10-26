@@ -235,6 +235,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
 }
 
 int main(int argc, char *argv[]) {
+	clear_adjacency_list_and_nodes();
 	process_args(argc, argv);
 
 	init(dev_file, format);
