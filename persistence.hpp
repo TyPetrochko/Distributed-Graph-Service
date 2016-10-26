@@ -6,12 +6,11 @@
 
 // In number of blocks:
 #define MAX_LOG 524287
-// #define MAX_LOG 10
 #define MAX_CHECKPOINT 2621440
 #define LOG_SIZE MAX_LOG
 #define CHECKPOINT_SIZE MAX_CHECKPOINT
 
-#define VERBOSE true
+#define VERBOSE false
 
 using namespace std;
 

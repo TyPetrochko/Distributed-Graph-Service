@@ -15,7 +15,7 @@ using std::cout;
 using std::pair;
 using std::queue;
 
-#define VERBOSE true
+#define VERBOSE false
 
 static unordered_map<uint64_t,list<uint64_t>> adjacencyList;
 
@@ -25,10 +25,6 @@ struct traversedNode {
 	uint64_t id;
 	uint64_t distance;
 };
-
-void print_nodes();
-
-void print_graph();
 
 // Used for persistence
 unordered_map<uint64_t, list<uint64_t>> *get_adjacency_list(){
