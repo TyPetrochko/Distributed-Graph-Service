@@ -12,7 +12,7 @@
 using namespace std;
 
 int fildes;
-static unsigned int generation;
+static uint64_t generation;
 static unsigned int log_start;
 static unsigned int log_size;
 
@@ -262,8 +262,25 @@ void load_checkpoint() {
 
   unsigned int offset = 0;
 
-  ssize_t size_read = pread(fildes, (void *) num_nodes, sizeof(uint64_t), LOG_SIZE*BLOCK_SIZE);
+  uint64_t *generationRead = (uint64_t *) malloc(sizeof(uint64_t));
+
+  ssize_t size_read = pread(fildes, (void *) generationRead, sizeof(uint64_t), LOG_SIZE*BLOCK_SIZE);
+  if ((*generationRead) != generation) {
+    return;
+  }
   if (size_read <= 0) {
+    free(generationRead);
+    free(num_nodes);
+    free(n);
+    free(num_edges);
+    free(e);
+    return;
+  }
+  offset++;
+
+  size_read = pread(fildes, (void *) num_nodes, sizeof(uint64_t), LOG_SIZE*BLOCK_SIZE);
+  if (size_read <= 0) {
+    free(generationRead);
     free(num_nodes);
     free(n);
     free(num_edges);
@@ -275,6 +292,7 @@ void load_checkpoint() {
   for (int i = 0; i < size_read; i++) {
     size_read = pread(fildes, (void *) n, sizeof(uint64_t), LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
     if (size_read <= 0) {
+      free(generationRead);
       free(num_nodes);
       free(n);
       free(num_edges);
@@ -287,6 +305,7 @@ void load_checkpoint() {
 
   size_read = pread(fildes, (void *) num_edges, sizeof(uint64_t), LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
   if (size_read <= 0) {
+    free(generationRead);
     free(num_nodes);
     free(n);
     free(num_edges);
@@ -298,6 +317,7 @@ void load_checkpoint() {
   for (int i = 0; i < size_read; i++) {
     size_read = pread(fildes, (void *) e, sizeof(edge), LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
     if (size_read <= 0) {
+      free(generationRead);
       free(num_nodes);
       free(n);
       free(num_edges);
@@ -325,9 +345,20 @@ bool checkpoint(){
   unsigned int offset = 0;
 
   ssize_t bytes_written = pwrite(fildes,
-                                (void *) &num_nodes,
+                                (void *) &generation,
                                 sizeof(uint64_t),
                                 LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
+  if (bytes_written <= 0) {
+    free(e);
+    return false;
+  }
+
+  offset++;
+
+  bytes_written = pwrite(fildes,
+                          (void *) &num_nodes,
+                          sizeof(uint64_t),
+                          LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
   if (bytes_written <= 0) {
     free(e);
     return false;
