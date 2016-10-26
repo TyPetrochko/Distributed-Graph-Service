@@ -136,8 +136,10 @@ void format_disk(bool initialized) {
 
 // Log a graph entry and write block back to disk
 void log(log_entry entry) {
-  if (VERBOSE)
+  if (VERBOSE) {
+    cout << "logop in log\n";
     logop(entry);
+  }
 
   l_block *l = (l_block*) get_block(log_size);
 

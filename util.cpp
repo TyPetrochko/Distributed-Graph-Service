@@ -12,8 +12,6 @@
 #include <errno.h>
 #include <string.h>
 
-#define VERBOSE true
-
 // Check if a given block (at index 'block') is correctly formatted
 bool checksum(unsigned int block){
   uint64_t *block_data = (uint64_t *) get_block(block);
@@ -94,8 +92,10 @@ void redo_operation(log_entry entry){
       DIE("Not a valid opcode: " << entry.opcode);
   }
 
-  if(VERBOSE)
+  if(VERBOSE) {
+    cout << "logop in redo\n";
     logop(entry);
+  }
 }
 
 // Debug print an entry
