@@ -21,12 +21,12 @@ string err_msg = string("HTTP/1.1 400 Bad Request\r\n")
   +	"Content-Type: application/json\r\n";
 
 // flags to read in
-char* port;
+char* port = 0;
 bool format;
 string dev_file;
 
 void process_args(int argc, char **argv) {
-	if (argc < 3){
+	if (argc < 3 || argc > 4){
 		cerr << "Usage: ./cs426_graph_server [-f] <port> <devfile>" << endl;
 		exit(1);
 	}
@@ -45,8 +45,17 @@ void process_args(int argc, char **argv) {
 		        default: cerr << "Usage: ./cs426_graph_server [-f] <port> <devfile>" << endl; exit(1);
 		    }
 	    }
-	    port = argv[2];
-	    dev_file = string(argv[3]);
+	    for(int i = 1; i <= 3; i++) {
+	    	if (argv[i][0] == '-') {
+	    		continue;
+	    	}
+
+	    	if (port == 0) {
+	    		port = argv[i];
+	    	} else {
+	    		dev_file = string(argv[i]);
+	    	}
+	    }
 	}
 }
 
