@@ -12,6 +12,8 @@
 #include <errno.h>
 #include <string.h>
 
+#define VERBOSE true
+
 // Check if a given block (at index 'block') is correctly formatted
 bool checksum(unsigned int block){
   uint64_t *block_data = (uint64_t *) get_block(block);
@@ -21,6 +23,11 @@ bool checksum(unsigned int block){
     DIE("Pread failed!" << strerror(errno));
 
   uint64_t chksm = block_data[0] ^ get_checksum(block_data);
+
+  if(VERBOSE) {
+    cout << "listed checksum " << block_data[0] << '\n';
+    cout << "calculated checksum " << get_checksum(block_data) << '\n';
+  }
 
   if(munmap(block_data, BLOCK_SIZE) == -1)
     DIE("Couldn't unmap");
