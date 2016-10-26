@@ -214,6 +214,11 @@ void initialize_log() {
 
 // Format block as a log entry block
 void create_lblock(unsigned int block) {
+  if(VERBOSE) {
+    print_nodes();
+    print_graph();
+    cout << "nodes and graph in start of create lblock\n";
+  }
   l_block *l = (l_block*) get_block(block);
 
   l->generation = generation;
@@ -228,6 +233,12 @@ void create_lblock(unsigned int block) {
 
   if (!checksum(block))
     DIE("Could not format log block " << block);
+  
+  if(VERBOSE) {
+    print_nodes();
+    print_graph();
+    cout << "nodes and graph in end of create lblock\n";
+  }
 }
 
 // Create initialized superblock
