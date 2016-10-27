@@ -18,7 +18,7 @@ curl -H "Content-Type: application/json" -X POST -d '{"node_a_id":201, "node_b_i
 
 curl -H "Content-Type: application/json" -X POST -d '{"node_id":202}' http://130.211.164.50:1111/api/v1/get_neighbors
 
-curl -H "Content-Type: application/json" -X POST -d http://130.211.164.50:1111/api/v1/checkpoint
+curl -H "Content-Type: application/json" -X POST -d '{}' http://130.211.164.50:1111/api/v1/checkpoint
 
 # Useful for testing that the log fills up!
 # for i in {1..169}
