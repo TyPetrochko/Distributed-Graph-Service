@@ -423,6 +423,7 @@ bool checkpoint(){
   }
   if (bytes_written <= 0) {
     free(e);
+    cout << "bytes_written value is: " << bytes_written << "\n";
     DIE("Pwrite of generation failed!\n");
     return false;
   }
