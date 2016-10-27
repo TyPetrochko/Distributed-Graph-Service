@@ -313,14 +313,14 @@ void load_checkpoint() {
 
   uint64_t *generationRead = (uint64_t *) malloc(sizeof(uint64_t));
 
-  ssize_t size_read = pread(fildes, (void *) generationRead, sizeof(uint64_t), LOG_SIZE*BLOCK_SIZE);
+  ssize_t size_read = pread(fildes, (void *) generationRead, sizeof(uint64_t), LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
   if(VERBOSE) {
     cout << "on load checkpoint, fildes read was " << fildes << "\n";
     cout << "on load checkpoint, offset read was " << offset << "\n";
-    cout << "on load checkpoint, generation read was " << (*generationRead) << "\n";
+    cout << "on load checkpoint, generation read was " << ((uint64_t) *generationRead) << "\n";
     cout << "on load checkpoint, generation was " << generation << "\n";
   }
-  if ((*generationRead) != generation) {
+  if (((uint64_t) *generationRead) != generation) {
     return;
   }
   if (size_read <= 0) {
