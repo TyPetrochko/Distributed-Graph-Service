@@ -502,6 +502,11 @@ bool checkpoint(){
 
   for(uint64_t node: nodes) {
     cp_node(node);
+
+    // check if log is full
+    if(MAX_LOG + node_check_size + edge_check_size > MAX_CHECKPOINT) {
+      return false;
+    }
   }
 
   edge *e = (edge *) malloc(sizeof(edge));
@@ -513,6 +518,11 @@ bool checkpoint(){
         e->node_a = node;
         e->node_b = neighbor;
         cp_edge((*e));
+
+        // check if log is full
+        if(MAX_LOG + node_check_size + edge_check_size > MAX_CHECKPOINT) {
+          return false;
+        }
       }
     }
   }

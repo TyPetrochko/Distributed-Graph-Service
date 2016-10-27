@@ -267,12 +267,6 @@ int main(int argc, char *argv[]) {
 	// listen for http
 	mg_set_protocol_http_websocket(nc);
 
-	if(VERBOSE) {
-	  	print_nodes();
-	    print_graph();
-	    cout << "nodes and graph later in main\n";
-	}
-
 	for (;;) {  // Start infinite event loop
 		mg_mgr_poll(&mgr, 1000);
 	}
