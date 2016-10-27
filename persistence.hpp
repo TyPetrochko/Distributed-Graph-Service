@@ -2,6 +2,8 @@
 #include <string>
 
 #define BLOCK_SIZE 4096
+#define NODES_PER_BLOCK 510
+#define EDGES_PER_BLOCK 205
 #define LOG_ENTRIES_PER_BLOCK 170
 
 // In number of blocks:
