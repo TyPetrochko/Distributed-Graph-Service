@@ -331,8 +331,10 @@ void load_checkpoint() {
   }
   offset++;
 
-  size_read = pread(fildes, (void *) num_nodes, sizeof(uint64_t), LOG_SIZE*BLOCK_SIZE);
+  size_read = pread(fildes, (void *) num_nodes, sizeof(uint64_t), LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
   if(VERBOSE) {
+    cout << "on load checkpoint, fildes read was " << fildes << "\n";
+    cout << "on load checkpoint, offset read was " << offset << "\n";
     cout << "on load checkpoint, num nodes read was " << (*num_nodes) << "\n";
   }
   if (size_read <= 0) {
@@ -408,6 +410,8 @@ bool checkpoint(){
                                 sizeof(uint64_t),
                                 LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
   if(VERBOSE) {
+    cout << "on checkpoint, fildes written was " << fildes << "\n";
+    cout << "on checkpoint, offest written was " << offset << "\n";
     cout << "on checkpoint, generation written was " << generation << "\n";
   }
   if (bytes_written <= 0) {
