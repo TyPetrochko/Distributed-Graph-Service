@@ -297,6 +297,9 @@ void restore_graph() {
 }
 
 void load_checkpoint() {
+  if(VERBOSE) {
+    cout << "loaded checkpoint\n";
+  }
   clear_adjacency_list_and_nodes();
 
   uint64_t *num_nodes = (uint64_t *) malloc(sizeof(uint64_t));
@@ -310,6 +313,10 @@ void load_checkpoint() {
   uint64_t *generationRead = (uint64_t *) malloc(sizeof(uint64_t));
 
   ssize_t size_read = pread(fildes, (void *) generationRead, sizeof(uint64_t), LOG_SIZE*BLOCK_SIZE);
+  if(VERBOSE) {
+    cout << "on load checkpoint, generation read was" << (*generationRead) << "\n";
+    cout << "on load checkpoint, generation was" << generation << "\n";
+  }
   if ((*generationRead) != generation) {
     return;
   }
@@ -324,6 +331,9 @@ void load_checkpoint() {
   offset++;
 
   size_read = pread(fildes, (void *) num_nodes, sizeof(uint64_t), LOG_SIZE*BLOCK_SIZE);
+  if(VERBOSE) {
+    cout << "on load checkpoint, num nodes read was" << (*num_nodes) << "\n";
+  }
   if (size_read <= 0) {
     free(generationRead);
     free(num_nodes);
@@ -380,6 +390,9 @@ void load_checkpoint() {
 }
 
 bool checkpoint(){
+  if(VERBOSE) {
+    cout << "checkpoint called\n";
+  }
   unordered_set<uint64_t> nodes = *(get_nodes());
   uint64_t num_nodes = (uint64_t) nodes.size();
 
@@ -393,6 +406,9 @@ bool checkpoint(){
                                 (void *) &generation,
                                 sizeof(uint64_t),
                                 LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
+  if(VERBOSE) {
+    cout << "on checkpoint, generation written was" << generation << "\n";
+  }
   if (bytes_written <= 0) {
     free(e);
     return false;
@@ -404,6 +420,9 @@ bool checkpoint(){
                           (void *) &num_nodes,
                           sizeof(uint64_t),
                           LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
+  if(VERBOSE) {
+    cout << "on checkpoint, num nodes written was" << num_nodes << "\n";
+  }
   if (bytes_written <= 0) {
     free(e);
     return false;
