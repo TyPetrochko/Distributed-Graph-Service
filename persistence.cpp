@@ -320,15 +320,16 @@ void load_checkpoint() {
     cout << "on load checkpoint, generation read was " << ((uint64_t) *generationRead) << "\n";
     cout << "on load checkpoint, generation was " << generation << "\n";
   }
-  if (((uint64_t) *generationRead) != generation) {
-    return;
-  }
   if (size_read <= 0) {
     free(generationRead);
     free(num_nodes);
     free(n);
     free(num_edges);
     free(e);
+    DIE("Pread of generation failed!\n");
+    return;
+  }
+  if (((uint64_t) *generationRead) != generation) {
     return;
   }
   offset++;
@@ -345,6 +346,7 @@ void load_checkpoint() {
     free(n);
     free(num_edges);
     free(e);
+    DIE("Pread of node count failed!\n");
     return;
   }
   offset++;
@@ -357,6 +359,7 @@ void load_checkpoint() {
       free(n);
       free(num_edges);
       free(e);
+      DIE("Pread of a node failed!\n");
       return;
     }
     add_node(*n);
@@ -370,6 +373,7 @@ void load_checkpoint() {
     free(n);
     free(num_edges);
     free(e);
+    DIE("Pread of edge count failed!\n");
     return;
   }
   offset++;
@@ -382,6 +386,7 @@ void load_checkpoint() {
       free(n);
       free(num_edges);
       free(e);
+      DIE("Pread of an edge failed!\n");
       return;
     }
     add_edge(e->node_a,e->node_b);
@@ -418,6 +423,7 @@ bool checkpoint(){
   }
   if (bytes_written <= 0) {
     free(e);
+    DIE("Pwrite of generation failed!\n");
     return false;
   }
 
@@ -434,6 +440,7 @@ bool checkpoint(){
   }
   if (bytes_written <= 0) {
     free(e);
+    DIE("Pwrite of nodecount failed!\n");
     return false;
   }
 
@@ -446,6 +453,7 @@ bool checkpoint(){
                             LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
     if (bytes_written <= 0) {
       free(e);
+      DIE("Pwrite of a node failed!\n");
       return false;
     }
     offset++;
@@ -457,6 +465,7 @@ bool checkpoint(){
                           LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
   if (bytes_written <= 0) {
     free(e);
+    DIE("Pwrite of edge count failed!\n");
     return false;
   }
   offset++;
@@ -473,6 +482,7 @@ bool checkpoint(){
                                 LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
         if (bytes_written <= 0) {
           free(e);
+          DIE("Pwrite of an edge failed!\n");
           return false;
         }
         offset += sizeof(edge);
