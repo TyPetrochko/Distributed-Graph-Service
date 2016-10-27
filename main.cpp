@@ -15,8 +15,6 @@
 
 using namespace std;
 
-#define TESTCHECK true
-
 // default error message
 string err_msg = string("HTTP/1.1 400 Bad Request\r\n")
   + "Content-Length: 0\r\n"
@@ -28,10 +26,6 @@ bool format;
 string dev_file;
 
 void process_args(int argc, char **argv) {
-	if (TESTCHECK && argc == 2 && argv[1] == "-c") {
-		checkpoint();
-		return;
-	}
 	if (argc < 3 || argc > 4){
 		cerr << "Usage: ./cs426_graph_server [-f] <port> <devfile>" << endl;
 		exit(1);
