@@ -51,11 +51,6 @@ unsigned int get_num_edges() {
 int add_node(uint64_t node_id) {
 	if(get_node(node_id).in_graph) {
 		// Node already in graph
-		if(VERBOSE) {
-			print_nodes();
-			print_graph();
-			cout << "printed graph\n";
-		}
 		return 204;
 	} else {
 		// Node not already in graph
