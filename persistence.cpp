@@ -153,11 +153,6 @@ bool init(string dev_file, bool format) {
 
 // Update the superblock on disk to represent in-memory metadata
 void format_c_superblock() {
-  /*if(VERBOSE) {
-    print_nodes();
-    print_graph();
-    cout << "nodes and graph in format superblock\n";
-  }*/
   c_s_block *super = (c_s_block*) get_block(MAX_LOG);
 
   super->generation = generation;
@@ -174,11 +169,6 @@ void format_c_superblock() {
 
 // Update the superblock of the checkpoint on disk to represent in-memory metadata
 void format_superblock() {
-  /*if(VERBOSE) {
-    print_nodes();
-    print_graph();
-    cout << "nodes and graph in format superblock\n";
-  }*/
   s_block *super = (s_block*) get_block(0);
 
   super->generation = generation;
@@ -196,11 +186,6 @@ void format_superblock() {
 // Format the disk and start the log! If initialized is false it is the first time.
 // Otherwise a format is called on a pre-existing memory space.
 void format_disk(bool initialized) {
-  /*if(VERBOSE) {
-    print_nodes();
-    print_graph();
-    cout << "nodes and graph in format disk\n";
-  }*/
   if (initialized) {
     initialize_log();
     generation++;
@@ -332,11 +317,6 @@ void initialize_log() {
 
 // Format block as a log entry block
 void create_lblock(unsigned int block) {
-  /*if(VERBOSE) {
-    print_nodes();
-    print_graph();
-    cout << "nodes and graph in start of create lblock\n";
-  }*/
   l_block *l = (l_block*) get_block(block);
 
   l->generation = generation;
@@ -351,21 +331,10 @@ void create_lblock(unsigned int block) {
 
   if (!checksum(block))
     DIE("Could not format log block " << block);
-
-  /*if(VERBOSE) {
-    print_nodes();
-    print_graph();
-    cout << "nodes and graph in end of create lblock\n";
-  }*/
 }
 
 // Format block as a checkpointed node block
 void create_c_node_block(unsigned int block) {
-  /*if(VERBOSE) {
-    print_nodes();
-    print_graph();
-    cout << "nodes and graph in start of create c node block\n";
-  }*/
   c_node_block *l = (c_node_block*) get_block(block);
 
   l->generation = generation;
@@ -380,21 +349,10 @@ void create_c_node_block(unsigned int block) {
 
   if (!checksum(block))
     DIE("Could not format checkpointed node block " << block);
-
-  /*if(VERBOSE) {
-    print_nodes();
-    print_graph();
-    cout << "nodes and graph in end of create c node block\n";
-  }*/
 }
 
 // Format block as a checkpointed node block
 void create_c_edge_block(unsigned int block) {
-  /*if(VERBOSE) {
-    print_nodes();
-    print_graph();
-    cout << "nodes and graph in start of create c edge block\n";
-  }*/
   c_edge_block *l = (c_edge_block*) get_block(block);
 
   l->generation = generation;
@@ -409,12 +367,6 @@ void create_c_edge_block(unsigned int block) {
 
   if (!checksum(block))
     DIE("Could not format checkpointed edge block " << block);
-
-  /*if(VERBOSE) {
-    print_nodes();
-    print_graph();
-    cout << "nodes and graph in end of create c edge block\n";
-  }*/
 }
 
 // Create an initialized checkpoint superblock
@@ -478,12 +430,6 @@ void restore_graph() {
 
     free_block(l);
   }
-
-  /*if(VERBOSE) {
-    print_nodes();
-    print_graph();
-    cout << "nodes and graph after restore\n";
-  }*/
 }
 
 void load_checkpoint() {
