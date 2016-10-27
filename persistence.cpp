@@ -493,6 +493,9 @@ void load_checkpoint() {
   clear_adjacency_list_and_nodes();
 
   c_s_block *s = (c_s_block*) get_block(MAX_LOG);
+  if (!checksum(MAX_LOG))
+      DEBUG("Block " << (MAX_LOG) << " corrupted!");
+
   if (generation != s->generation) {
     return;
   }
@@ -503,7 +506,7 @@ void load_checkpoint() {
   // iterate over every checkpointed node block
   for (unsigned int i = 1; i <= node_check_size; i++) {
 
-    if(VERBOSE) DEBUG("On block " << i);
+    if(VERBOSE) DEBUG("On block " << (MAX_LOG + i));
 
     if (!checksum(MAX_LOG + i))
       DEBUG("Block " << (MAX_LOG + i) << " corrupted!");
@@ -519,7 +522,7 @@ void load_checkpoint() {
   // iterate over every checkpointed node block
   for (unsigned int i = 1; i <= edge_check_size; i++) {
 
-    if(VERBOSE) DEBUG("On block " << i);
+    if(VERBOSE) DEBUG("On block " << (MAX_LOG + node_check_size + i));
 
     if (!checksum(MAX_LOG + node_check_size + i))
       DEBUG("Block " << (MAX_LOG + node_check_size + i) << " corrupted!");
@@ -543,6 +546,9 @@ bool checkpoint(){
   generation++;
   log_size = 1;
   log_start = 1;
+
+  node_check_size = 1;
+  edge_check_size = 1;
 
   create_c_s_block();
 
