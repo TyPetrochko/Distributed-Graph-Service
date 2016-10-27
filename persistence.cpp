@@ -140,6 +140,7 @@ void format_disk(bool initialized) {
     cout << "nodes and graph in format disk\n";
   }
   if (initialized) {
+    initialize_log();
     generation++;
     log_start = 1;
     log_size = 1;
@@ -314,8 +315,8 @@ void load_checkpoint() {
 
   ssize_t size_read = pread(fildes, (void *) generationRead, sizeof(uint64_t), LOG_SIZE*BLOCK_SIZE);
   if(VERBOSE) {
-    cout << "on load checkpoint, generation read was" << (*generationRead) << "\n";
-    cout << "on load checkpoint, generation was" << generation << "\n";
+    cout << "on load checkpoint, generation read was " << (*generationRead) << "\n";
+    cout << "on load checkpoint, generation was " << generation << "\n";
   }
   if ((*generationRead) != generation) {
     return;
@@ -332,7 +333,7 @@ void load_checkpoint() {
 
   size_read = pread(fildes, (void *) num_nodes, sizeof(uint64_t), LOG_SIZE*BLOCK_SIZE);
   if(VERBOSE) {
-    cout << "on load checkpoint, num nodes read was" << (*num_nodes) << "\n";
+    cout << "on load checkpoint, num nodes read was " << (*num_nodes) << "\n";
   }
   if (size_read <= 0) {
     free(generationRead);
@@ -407,7 +408,7 @@ bool checkpoint(){
                                 sizeof(uint64_t),
                                 LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
   if(VERBOSE) {
-    cout << "on checkpoint, generation written was" << generation << "\n";
+    cout << "on checkpoint, generation written was " << generation << "\n";
   }
   if (bytes_written <= 0) {
     free(e);
@@ -421,7 +422,7 @@ bool checkpoint(){
                           sizeof(uint64_t),
                           LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
   if(VERBOSE) {
-    cout << "on checkpoint, num nodes written was" << num_nodes << "\n";
+    cout << "on checkpoint, num nodes written was " << num_nodes << "\n";
   }
   if (bytes_written <= 0) {
     free(e);
