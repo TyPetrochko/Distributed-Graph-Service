@@ -411,10 +411,13 @@ bool checkpoint(){
   uint64_t num_unique_edges = (uint64_t) get_num_edges() / 2;
 
   edge *e = (edge *) malloc(sizeof(edge));
+  uint64_t *generationWrite = (uint64_t *) malloc(sizeof(uint64_t));
+  generationWrite[0] = generation;
+
   unsigned int offset = 0;
 
   ssize_t bytes_written = pwrite(fildes,
-                                (void *) &generation,
+                                (void *) generationWrite,
                                 sizeof(uint64_t),
                                 LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
   if(VERBOSE) {
@@ -423,6 +426,7 @@ bool checkpoint(){
     cout << "on checkpoint, generation written was " << generation << "\n";
   }
   if (bytes_written <= 0) {
+    free(generationWrite);
     free(e);
     cout << "bytes_written value is: " << bytes_written << "\n";
     cout << "errno is: " << errno << "\n";
@@ -442,6 +446,7 @@ bool checkpoint(){
     cout << "on checkpoint, num nodes written was " << num_nodes << "\n";
   }
   if (bytes_written <= 0) {
+    free(generationWrite);
     free(e);
     DIE("Pwrite of nodecount failed!\n");
     return false;
@@ -455,6 +460,7 @@ bool checkpoint(){
                             sizeof(uint64_t),
                             LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
     if (bytes_written <= 0) {
+      free(generationWrite);
       free(e);
       DIE("Pwrite of a node failed!\n");
       return false;
@@ -467,6 +473,7 @@ bool checkpoint(){
                           sizeof(uint64_t),
                           LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
   if (bytes_written <= 0) {
+    free(generationWrite);
     free(e);
     DIE("Pwrite of edge count failed!\n");
     return false;
@@ -484,6 +491,7 @@ bool checkpoint(){
                                 sizeof(edge),
                                 LOG_SIZE*BLOCK_SIZE + offset*sizeof(uint64_t));
         if (bytes_written <= 0) {
+          free(generationWrite);
           free(e);
           DIE("Pwrite of an edge failed!\n");
           return false;
