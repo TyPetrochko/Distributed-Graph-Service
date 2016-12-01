@@ -24,6 +24,17 @@ class GraphEditHandler : virtual public GraphEditIf {
 
   bool editGraph(const Packet& p) {
     // Your implementation goes here
+    switch(p.op) {
+      case Operation::ADD_NODE:
+        break;
+      case Operation::ADD_EDGE:
+        break;
+      case Operation::REMOVE_NODE:
+        break;
+      case Operation::REMOVE_EDGE:
+        break;
+
+    }
     printf("editGraph\n");
   }
 
