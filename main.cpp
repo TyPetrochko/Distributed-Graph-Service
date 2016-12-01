@@ -7,12 +7,24 @@
 #include <string>
 #include <stdlib.h>
 
+#include <thrift/protocol/TBinaryProtocol.h>
+#include <thrift/transport/TSocket.h>
+#include <thrift/transport/TTransportUtils.h>
+
 #include "mongoose.h"
 #include "memorygraph.hpp"
 #include "JSON.h"
 #include "replication.hpp"
 
+#include "GraphEdit.h"
+
 using namespace std;
+
+using namespace apache::thrift;
+using namespace apache::thrift::protocol;
+using namespace apache::thrift::transport;
+
+using namespace rpc;
 
 // default error message
 string err_msg = string("HTTP/1.1 400 Bad Request\r\n")
@@ -92,6 +104,53 @@ string handle_request(string body, string uri){
 	string proto = "HTTP/1.1";
 	int resp_code = 400;
 
+	/*
+	 * First propagate the request to the next server before committing own
+	 */
+	bool 
+	boost::shared_ptr<TTransport> socket(new TSocket("localhost", 9090));
+	boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+	boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+	GraphEditClient client(protocol);
+
+	try {
+		transport->open();
+
+		Packet p;
+		if(func == "add_node" && root[L"node_id"] && root[L"node_id"]->IsNumber()){
+			p.op = Operation::ADD_NODE;
+			p.node_a = root[L"node_id"];
+		} else if (func == "add_edge" 
+			&& root[L"node_a_id"]
+			&& root[L"node_b_id"]
+			&& root[L"node_a_id"]->IsNumber() 
+			&& root[L"node_b_id"]->IsNumber()){
+			p.op = Operation::ADD_EDGE;
+			p.node_a = root[L"node_a_id"];
+			p.node_b = root[L"node_b_id"];
+		} else if (func == "remove_node" 
+				&& root[L"node_id"] 
+				&& root[L"node_id"]->IsNumber()){
+			p.op = Operation::REMOVE_NODE;
+			p.node_a = root[L"node_id"];
+		}else if (func == "remove_edge"
+				&& root[L"node_a_id"]
+				&& root[L"node_b_id"]
+				&& root[L"node_a_id"]->IsNumber() 
+				&& root[L"node_b_id"]->IsNumber()){
+			p.op = Operation::REMOVE_EDGE;
+			p.node_a = root[L"node_a_id"];
+			p.node_b = root[L"node_b_id"];
+		}
+
+		client.editGraph(p);
+
+		transport->close();
+	} catch (TException& tx) {
+		cout << "ERROR: " << tx.what() << endl;
+		return err_msg;
+	}
+
 	// giant pseudo-switch statement to actually call the API
 	if(func == "add_node" && root[L"node_id"] && root[L"node_id"]->IsNumber()){
 		resp_code = add_node(root[L"node_id"]->AsNumber());
@@ -146,7 +205,7 @@ string handle_request(string body, string uri){
 		if((resp_code = d.status) == 200){
 			JSONObject return_data;
 			JSONArray neighbors;
-			for(uint64_t n : d.neighbors){
+			for(int64_t n : d.neighbors){
 				neighbors.push_back(new JSONValue((double) n));
 			}
 			return_data[L"node_id"] = root[L"node_id"];

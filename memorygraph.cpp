@@ -15,16 +15,16 @@ using std::cout;
 using std::pair;
 using std::queue;
 
-static unordered_map<uint64_t,list<uint64_t> > adjacencyList;
+static unordered_map<int64_t,list<int64_t> > adjacencyList;
 
-static unordered_set<uint64_t> nodes;
+static unordered_set<int64_t> nodes;
 
 struct traversedNode {
-	uint64_t id;
-	uint64_t distance;
+	int64_t id;
+	int64_t distance;
 };
 
-int add_node(uint64_t node_id) {
+int add_node(int64_t node_id) {
 	if(get_node(node_id).in_graph) {
 		// Node already in graph
 		return 204;
@@ -36,7 +36,7 @@ int add_node(uint64_t node_id) {
 	}
 }
 
-int add_edge(uint64_t node_a_id, uint64_t node_b_id) {
+int add_edge(int64_t node_a_id, int64_t node_b_id) {
 	if(node_a_id == node_b_id) {
 		// Nodes A and B are the same
 		return 400;
@@ -57,21 +57,21 @@ int add_edge(uint64_t node_a_id, uint64_t node_b_id) {
 	}
 }
 
-int remove_node(uint64_t node_id) {
-	unordered_set<uint64_t>::const_iterator found = nodes.find(node_id);
+int remove_node(int64_t node_id) {
+	unordered_set<int64_t>::const_iterator found = nodes.find(node_id);
 
 	if(found != nodes.end()){
 		// Remove node from set of nodes
 		nodes.erase(node_id);
 
 		// Remove all edges with node
-		unordered_map<uint64_t,list<uint64_t> >::const_iterator foundEdges = adjacencyList.find(node_id);
+		unordered_map<int64_t,list<int64_t> >::const_iterator foundEdges = adjacencyList.find(node_id);
 
 		if(foundEdges != adjacencyList.end()) {
-			list<uint64_t> adjacentNodes = foundEdges->second;
+			list<int64_t> adjacentNodes = foundEdges->second;
 
 			// Remove from the adjacency list of all adjacent nodes
-			for(uint64_t newNode : adjacentNodes){
+			for(int64_t newNode : adjacentNodes){
 				remove_edge(newNode,node_id);
 			}
 
@@ -85,15 +85,15 @@ int remove_node(uint64_t node_id) {
 	}
 }
 
-int remove_edge(uint64_t node_a_id, uint64_t node_b_id) {
-	unordered_map<uint64_t,list<uint64_t> >::const_iterator foundA = adjacencyList.find(node_a_id);
-	unordered_map<uint64_t,list<uint64_t> >::const_iterator foundB = adjacencyList.find(node_b_id);
+int remove_edge(int64_t node_a_id, int64_t node_b_id) {
+	unordered_map<int64_t,list<int64_t> >::const_iterator foundA = adjacencyList.find(node_a_id);
+	unordered_map<int64_t,list<int64_t> >::const_iterator foundB = adjacencyList.find(node_b_id);
 	if(foundA != adjacencyList.end() && foundB != adjacencyList.end()){
 		bool adjacencyFound = false;
 
 		// Remove B from A's adjacency list
-		list<uint64_t> edgesFromA = foundA->second;
-		for(list<uint64_t>::const_iterator i = edgesFromA.begin(); i != edgesFromA.end(); i++) {
+		list<int64_t> edgesFromA = foundA->second;
+		for(list<int64_t>::const_iterator i = edgesFromA.begin(); i != edgesFromA.end(); i++) {
 			if((*i) == node_b_id){
 				// adjacencyList[node_a_id].erase(i);
 				adjacencyFound = true;
@@ -102,8 +102,8 @@ int remove_edge(uint64_t node_a_id, uint64_t node_b_id) {
 		}
 
 		// Remove A from B's adjacency list
-		list<uint64_t> edgesFromB = foundB->second;
-		for(list<uint64_t>::const_iterator i = edgesFromB.begin(); i != edgesFromB.end(); i++) {
+		list<int64_t> edgesFromB = foundB->second;
+		for(list<int64_t>::const_iterator i = edgesFromB.begin(); i != edgesFromB.end(); i++) {
 			if((*i) == node_a_id){
 				// adjacencyList[node_b_id].erase(i);
 				adjacencyFound = true;
@@ -122,10 +122,10 @@ int remove_edge(uint64_t node_a_id, uint64_t node_b_id) {
 	return 400;
 }
 
-struct nodeData get_node(uint64_t node_id) {
+struct nodeData get_node(int64_t node_id) {
 	struct nodeData out;
 	out.status = 200;
-	unordered_set<uint64_t>::const_iterator found = nodes.find(node_id);
+	unordered_set<int64_t>::const_iterator found = nodes.find(node_id);
 
 	if(found == nodes.end()){
 		// Node not in graph
@@ -138,10 +138,10 @@ struct nodeData get_node(uint64_t node_id) {
 	return out;
 }
 
-struct nodeData get_edge(uint64_t node_a_id, uint64_t node_b_id) {
+struct nodeData get_edge(int64_t node_a_id, int64_t node_b_id) {
 	struct nodeData out;
-	unordered_set<uint64_t>::const_iterator foundA = nodes.find(node_a_id);
-	unordered_set<uint64_t>::const_iterator foundB = nodes.find(node_b_id);
+	unordered_set<int64_t>::const_iterator foundA = nodes.find(node_a_id);
+	unordered_set<int64_t>::const_iterator foundB = nodes.find(node_b_id);
 
 	if(foundA == nodes.end() || foundB == nodes.end()) {
 		// A or B not in graph
@@ -151,10 +151,10 @@ struct nodeData get_edge(uint64_t node_a_id, uint64_t node_b_id) {
 		out.status = 200;
 
 		// A and B in graph
-		list<uint64_t> adjacentToA = adjacencyList[node_a_id];
+		list<int64_t> adjacentToA = adjacencyList[node_a_id];
 		bool nodesAdjacent = false;
 
-		for(uint64_t node : adjacentToA) {
+		for(int64_t node : adjacentToA) {
 			if(node == node_b_id) {
 				nodesAdjacent = true;
 				break;
@@ -166,9 +166,9 @@ struct nodeData get_edge(uint64_t node_a_id, uint64_t node_b_id) {
 	return out;
 }
 
-struct neighborData get_neighbors(uint64_t node_id) {
+struct neighborData get_neighbors(int64_t node_id) {
 	struct neighborData out;
-	unordered_map<uint64_t,list<uint64_t> >::const_iterator found = adjacencyList.find(node_id);
+	unordered_map<int64_t,list<int64_t> >::const_iterator found = adjacencyList.find(node_id);
 	if(found != adjacencyList.end()) {
 		// Found neighbors for node
 		out.neighbors = adjacencyList[node_id];
@@ -181,7 +181,7 @@ struct neighborData get_neighbors(uint64_t node_id) {
 	return out;
 }
 
-struct distanceData shortest_path(uint64_t node_a_id, uint64_t node_b_id) {
+struct distanceData shortest_path(int64_t node_a_id, int64_t node_b_id) {
 	struct distanceData out;
 
 	if(nodes.find(node_a_id) == nodes.end() || nodes.find(node_b_id) == nodes.end()) {
@@ -196,7 +196,7 @@ struct distanceData shortest_path(uint64_t node_a_id, uint64_t node_b_id) {
 		return out;
 	}
 	queue<struct traversedNode> traversal;
-	unordered_set<uint64_t> seen;
+	unordered_set<int64_t> seen;
 
 	struct traversedNode first;
 	first.id = node_a_id;
@@ -206,9 +206,9 @@ struct distanceData shortest_path(uint64_t node_a_id, uint64_t node_b_id) {
 	while(!traversal.empty()) {
 		struct traversedNode curr = traversal.front();
 		traversal.pop();
-		list<uint64_t> adjacent = get_neighbors(curr.id).neighbors;
+		list<int64_t> adjacent = get_neighbors(curr.id).neighbors;
 
-		for(uint64_t adjNode : adjacent) {
+		for(int64_t adjNode : adjacent) {
 			if(adjNode == node_b_id) {
 				out.distance = curr.distance + 1;
 				out.status = 200;
@@ -231,15 +231,15 @@ struct distanceData shortest_path(uint64_t node_a_id, uint64_t node_b_id) {
 }
 
 void print_nodes(){
-	for(uint64_t node : nodes) {
+	for(int64_t node : nodes) {
 		cout << node << '\n';
 	}
 }
 
 void print_graph(){
-	for(pair<uint64_t,list<uint64_t> > pairing : adjacencyList) {
+	for(pair<int64_t,list<int64_t> > pairing : adjacencyList) {
 		cout << pairing.first << ": ";
-		for(uint64_t adjacency : pairing.second) {
+		for(int64_t adjacency : pairing.second) {
 			cout << adjacency << ' ';
 		}
 		cout << '\n';
@@ -309,15 +309,15 @@ int x_main(void) {
 	print_graph();
 
 	cout << get_neighbors(20).status << '\n';
-	for(uint64_t a : get_neighbors(20).neighbors) {
+	for(int64_t a : get_neighbors(20).neighbors) {
 		cout << "neighbor: " << a << '\n';
 	}
 	cout << get_neighbors(5).status << '\n';
-	for(uint64_t a : get_neighbors(5).neighbors) {
+	for(int64_t a : get_neighbors(5).neighbors) {
 		cout << "neighbor: " << a << '\n';
 	}
 	cout << get_neighbors(1).status << '\n';
-	for(uint64_t a : get_neighbors(1).neighbors) {
+	for(int64_t a : get_neighbors(1).neighbors) {
 		cout << "neighbor: " << a << '\n';
 	}
 

@@ -26,16 +26,20 @@ class GraphEditHandler : virtual public GraphEditIf {
     // Your implementation goes here
     switch(p.op) {
       case Operation::ADD_NODE:
+        add_node(p.node_a);
         break;
       case Operation::ADD_EDGE:
+        add_edge(p.node_a, p.node_b);
         break;
       case Operation::REMOVE_NODE:
+        remove_add(p.node_a);
         break;
       case Operation::REMOVE_EDGE:
+        remove_edge(p.node_a, p.node_b);
         break;
-
+      default:
+        break;
     }
-    printf("editGraph\n");
   }
 
 };

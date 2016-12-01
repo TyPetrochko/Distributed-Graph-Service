@@ -9,28 +9,28 @@ struct nodeData {
 };
 
 struct neighborData{
-	list<uint64_t> neighbors;
+	list<int64_t> neighbors;
 	int status;
 };
 
 struct distanceData {
-	uint64_t distance;
+	int64_t distance;
 	int status;
 };
 
-int add_node(uint64_t node_id);
+int add_node(int64_t node_id);
 
-int add_edge(uint64_t node_a_id, uint64_t node_b_id);
+int add_edge(int64_t node_a_id, int64_t node_b_id);
 
-int remove_node(uint64_t node_id);
+int remove_node(int64_t node_id);
 
-int remove_edge(uint64_t node_a_id, uint64_t node_b_id);
+int remove_edge(int64_t node_a_id, int64_t node_b_id);
 
-struct nodeData get_node(uint64_t node_id);
+struct nodeData get_node(int64_t node_id);
 
-struct nodeData get_edge(uint64_t node_a_id, uint64_t node_b_id);
+struct nodeData get_edge(int64_t node_a_id, int64_t node_b_id);
 
-struct neighborData get_neighbors(uint64_t node_id);
+struct neighborData get_neighbors(int64_t node_id);
 
-struct distanceData shortest_path(uint64_t node_a_id, uint64_t node_b_id);
+struct distanceData shortest_path(int64_t node_a_id, int64_t node_b_id);
 
