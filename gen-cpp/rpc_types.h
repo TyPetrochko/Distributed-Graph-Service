@@ -33,7 +33,7 @@ extern const std::map<int, const char*> _Operation_VALUES_TO_NAMES;
 class Packet;
 
 typedef struct _Packet__isset {
-  _Packet__isset() : op(true), node_a(false), node_b(false) {}
+  _Packet__isset() : op(false), node_a(false), node_b(false) {}
   bool op :1;
   bool node_a :1;
   bool node_b :1;
@@ -45,8 +45,6 @@ class Packet {
   Packet(const Packet&);
   Packet& operator=(const Packet&);
   Packet() : op((Operation::type)0), node_a(0), node_b(0) {
-    op = (Operation::type)0;
-
   }
 
   virtual ~Packet() throw();
