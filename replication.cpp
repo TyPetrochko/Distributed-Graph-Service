@@ -20,20 +20,22 @@
 
 using namespace std;
 
-char *ip_addr;
+void serve_replica();
 
-void replica_init(char *ip){
+char *ip;
+
+void replica_init(char *ip_adr){
   if(DEBUG)
-    cout << "Replicating from ip addr " << ip_addr << endl;
-
-  ip_addr = ip;
-
+    cout << "Replicating from ip addr " << ip_adr << endl;
+  
+  ip = ip_adr;
+ 
   thread service(serve_replica);
 }
 
 void serve_replica(){
   if(DEBUG)
-    cout << "Service thread starting up" << endl;
+    cout << "Replica service thread starting up" << endl;
 
 }
 
