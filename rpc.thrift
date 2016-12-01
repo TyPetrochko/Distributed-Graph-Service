@@ -1,10 +1,10 @@
 namespace cpp rpc
 
 enum Operation {
-  ADD_NODE = 1,
-  ADD_EDGE = 2,
-  REMOVE_NODE = 3,
-  REMOVE_EDGE = 4
+  ADD_NODE = 0,
+  ADD_EDGE = 1,
+  REMOVE_NODE = 2,
+  REMOVE_EDGE = 3
 }
 
 struct Packet {
