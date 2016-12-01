@@ -5,10 +5,13 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <stdlib.h>
+
 #include "mongoose.h"
 #include "memorygraph.hpp"
 #include "JSON.h"
-#include <stdlib.h>
+#include "replication.hpp"
+
 using namespace std;
 
 // default error message
@@ -16,11 +19,38 @@ string err_msg = string("HTTP/1.1 400 Bad Request\r\n")
 + "Content-Length: 0\r\n"
 +	"Content-Type: application/json\r\n";
 
-void check_args(int argc){
-	if (argc < 2){
-		cerr << "Usage: ./cs426_graph_server <port>" << endl;
+// are we a slave (replica) and ip addr if so
+bool slave = false;
+char *ip_addr;
+char *port;
+
+void process_args(int argc, char **argv) {
+	if (argc < 2 || argc > 4){
+    cerr << "Usage: ./cs426_graph_server [-p <ip_addr>] <port>" << endl;
 		exit(1);
 	}
+
+	int option_char;
+  while ((option_char = getopt(argc, argv, "b")) != -1) {
+    switch (option_char){
+      case 'b':
+        slave = true;
+        ip_addr = optarg;
+        break;
+      default: 
+        cerr << "Usage: ./cs426_graph_server [-p <ip_addr>] <port>" << endl;
+        exit(1);
+    }
+  }
+  for(int i = 1; i < argc; i++) {
+    if (argv[i][0] == '-') {
+      continue;
+    }
+
+    if (port == 0) {
+      port = argv[i];
+    }
+  }
 }
 
 // convert mongoose's weird string struct to a regular c++ string
@@ -197,7 +227,10 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
 }
 
 int main(int argc, char *argv[]){
-	check_args(argc);
+	process_args(argc, argv);
+
+  if(slave)
+    replica_init(ip_addr);
 
 	struct mg_connection *nc;
 	struct mg_mgr mgr;
@@ -205,7 +238,7 @@ int main(int argc, char *argv[]){
 
   // Note that many connections can be added to a single event manager
   // Connections can be created at any point, e.g. in event handler function
-  nc = mg_bind(&mgr, argv[1], ev_handler);
+  nc = mg_bind(&mgr, port, ev_handler);
 	
 	// listen for http
 	mg_set_protocol_http_websocket(nc);
