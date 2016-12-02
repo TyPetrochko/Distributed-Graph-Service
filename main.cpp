@@ -94,7 +94,7 @@ char *port;
 
 void process_args(int argc, char **argv) {
 	if (argc < 2 || argc > 4){
-    cerr << "Usage: ./cs426_graph_server [-p <ip_addr>] <port>" << endl;
+    cerr << "Usage: ./cs426_graph_server [-b <ip_addr>] <port>" << endl;
 		exit(1);
 	}
 
@@ -105,7 +105,7 @@ void process_args(int argc, char **argv) {
         ip_addr = optarg;
         break;
       default: 
-        cerr << "Usage: ./cs426_graph_server [-p <ip_addr>] <port>" << endl;
+        cerr << "Usage: ./cs426_graph_server [-b <ip_addr>] <port>" << endl;
         exit(1);
     }
   }
@@ -114,7 +114,7 @@ void process_args(int argc, char **argv) {
       continue;
     }
 
-    if (port == 0) {
+    if (port == 0 && strcmp(ip_addr,argv[i]) == 0) {
       port = argv[i];
     }
   }
