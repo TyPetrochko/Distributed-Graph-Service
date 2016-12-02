@@ -1,6 +1,6 @@
 /* Much of this code is adapted from the mongoose examples page,
  * https://docs.cesanta.com/mongoose/dev/#/usage-example/ */
-#define DEBUG (true)
+#define DEBUG (false)
 
 #include <iostream>
 #include <vector>
@@ -99,9 +99,14 @@ string handle_request(string body, string uri){
   string func;
   string prefix = "/api/v1/";
 
+  if(DEBUG)
+    cout << "REQUEST to " << uri << ": " << body << endl;
+
   // parse any json in the request
   value = JSON::Parse(body.c_str());
   if(value == NULL || value->IsObject() == false){
+    if(DEBUG)
+      cout << "Bad json! " <<  endl;
     return err_msg;
   }
   root = value->AsObject();
@@ -109,6 +114,8 @@ string handle_request(string body, string uri){
   // remove prefix from uri
   func = uri;
   if(func.length() <= prefix.length()){
+    if(DEBUG)
+      cout << "Bad function: " << uri  << endl;
     return err_msg;
   }
   func.erase(0, prefix.length());
@@ -207,6 +214,8 @@ string handle_request(string body, string uri){
       payload = json_to_string(return_data).c_str();
     }
   }else{
+    if(DEBUG)
+      cout << "Unknown function: " << uri  << endl;
     return err_msg;
   }
 
@@ -272,7 +281,7 @@ int main(int argc, char *argv[]){
 	process_args(argc, argv);
   
   // act as a backup no matter what
-  replica_init();
+  // replica_init();
 
   // replicate if -b flag provided
   if(master)
