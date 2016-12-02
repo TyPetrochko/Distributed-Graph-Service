@@ -19,7 +19,7 @@
 #include "memorygraph.hpp"
 #include "gen-cpp/GraphEdit.h"
 
-#define DEBUG (false)
+#define DEBUG (true)
 #define PORT (9090)
 
 using namespace apache::thrift;
