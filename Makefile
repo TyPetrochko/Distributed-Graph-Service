@@ -7,7 +7,7 @@ memorygraph: memorygraph.cpp memorygraph.hpp
 	${CC} ${CFLAGS} memorygraph.cpp -o $@
 
 main: main.cpp
-	${CC} ${CFLAGS} $^ memorygraph.cpp include/mongoose.c include/JSON.cpp include/JSONValue.cpp gen-cpp/GraphEdit.cpp gen-cpp/rpc_constants.cpp gen-cpp/rpc_types.cpp -L/usr/local/lib `pkg-config --libs grpc++ grpc` -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed -lprotobuf -lpthread -ldl -std=c++0x -pthread -o cs426_graph_server
+	${CC} ${CFLAGS} $^ memorygraph.cpp include/mongoose.c include/JSON.cpp include/JSONValue.cpp gen-cpp/GraphEdit.cpp gen-cpp/rpc_constants.cpp gen-cpp/rpc_types.cpp -L /usr/local/lib/ -lthrift -std=c++0x -pthread -o cs426_graph_server
 
 memorygraph.o: memorygraph.cpp memorygraph.hpp
 
