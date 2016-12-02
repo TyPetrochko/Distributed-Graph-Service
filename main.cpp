@@ -43,7 +43,7 @@ string err_msg = string("HTTP/1.1 400 Bad Request\r\n")
 
 bool master = false;
 char *ip_addr = 0;
-char *port;
+char *port = 0;
 
 void process_args(int argc, char **argv) {
 	if (argc < 2 || argc > 4){
@@ -52,9 +52,12 @@ void process_args(int argc, char **argv) {
 	}
 
 	int option_char;
-  while ((option_char = getopt(argc, argv, "b")) != -1) {
+  while ((option_char = getopt(argc, argv, "b:")) != -1) {
     switch (option_char){
       case 'b':
+        if(optarg == NULL)
+          cerr << "WTF OPTARG NULL" << endl;
+        cout << "found a b flag: " << optarg << endl;
         master = true;
         ip_addr = optarg;
         break;
@@ -64,14 +67,17 @@ void process_args(int argc, char **argv) {
     }
   }
   for(int i = 1; i < argc; i++) {
-    if (argv[i][0] == '-') {
+    if (argv[i][0] == '-')
       continue;
-    }
-
-    if (port == 0 && strcmp(ip_addr,argv[i]) == 0) {
+    else if(ip_addr && !strcmp(argv[i], ip_addr))
+      continue;
+    
+    if(port == 0)
       port = argv[i];
-    }
   }
+
+  if(port == 0)
+    cerr << "No port specified!" << endl;
 }
 
 // convert mongoose's weird string struct to a regular c++ string
@@ -265,6 +271,11 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
 
 int main(int argc, char *argv[]){
 	process_args(argc, argv);
+
+  cout << "Port: " << port << endl;
+
+  if(master)
+    cout << "ip addr: " << ip_addr << endl;
 
   // act as a backup no matter what
   replica_init();
