@@ -19,7 +19,7 @@
 #include "memorygraph.hpp"
 #include "gen-cpp/GraphEdit.h"
 
-#define DEBUG (false)
+#define DEBUG (true)
 #define PORT (9090)
 
 using namespace apache::thrift;
@@ -87,11 +87,12 @@ class GraphEditHandler : virtual public GraphEditIf {
 
 void replica_init(){
   thread service(serve_replica);
+  service.detach();
 }
 
 void master_init(char *ip_adr){
   if(DEBUG)
-    cout << "Replicating on ip " << ip_adr << endl;
+    cout << "Replicating on ip " << ip_adr << ", port " << PORT << endl;
   replicating = true;
 
   boost::shared_ptr<TTransport> socket(new TSocket(ip_adr, PORT));
@@ -108,16 +109,24 @@ void master_init(char *ip_adr){
 
 void serve_replica(){
   if(DEBUG)
-    cout << "Replica service thread starting up" << endl;
+    cout << "Replica service thread starting up on port " << PORT << endl;
   
   boost::shared_ptr<GraphEditHandler> handler(new GraphEditHandler());
   boost::shared_ptr<TProcessor> processor(new GraphEditProcessor(handler));
   boost::shared_ptr<TServerTransport> serverTransport(new TServerSocket(PORT));
   boost::shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
   boost::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
-
-  TSimpleServer server(processor, serverTransport, transportFactory, protocolFactory);
+  
+  TThreadedServer server(processor, serverTransport, transportFactory, protocolFactory);
   server.serve();
+  
+  // TThreadedServer server(
+  //   boost::make_shared<GraphEditProcessorFactory>(boost::make_shared<GraphEditCloneFactory>()),
+  //   boost::make_shared<TServerSocket>(PORT),
+  //   boost::make_shared<TBufferedTransportFactory>(),
+  //   boost::make_shared<TBinaryProtocolFactory>());
+  // server.serve();
+  cerr << "Aborting!" << endl;
 }
 
 bool repl_add_node(int64_t node_id){
@@ -133,7 +142,7 @@ bool repl_add_node(int64_t node_id){
       return false;
     }
   }
-  return false;
+  return true;
 }
 bool repl_add_edge(int64_t node_a_id, int64_t node_b_id){
   Packet p;
@@ -149,7 +158,7 @@ bool repl_add_edge(int64_t node_a_id, int64_t node_b_id){
       return false;
     }
   }
-  return false;
+  return true;
 }
 bool repl_remove_node(int64_t node_id){
   Packet p;
@@ -164,7 +173,7 @@ bool repl_remove_node(int64_t node_id){
       return false;
     }
   }
-  return false;
+  return true;
 }
 bool repl_remove_edge(int64_t node_a_id, int64_t node_b_id){
   Packet p;
@@ -180,6 +189,6 @@ bool repl_remove_edge(int64_t node_a_id, int64_t node_b_id){
       return false;
     }
   }
-  return false;
+  return true;
 }
 

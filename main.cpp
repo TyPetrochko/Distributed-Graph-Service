@@ -1,6 +1,6 @@
 /* Much of this code is adapted from the mongoose examples page,
  * https://docs.cesanta.com/mongoose/dev/#/usage-example/ */
-#define DEBUG (false)
+#define DEBUG (true)
 
 #include <iostream>
 #include <vector>
@@ -57,7 +57,6 @@ void process_args(int argc, char **argv) {
       case 'b':
         if(optarg == NULL)
           cerr << "WTF OPTARG NULL" << endl;
-        cout << "found a b flag: " << optarg << endl;
         master = true;
         ip_addr = optarg;
         break;
@@ -271,12 +270,7 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
 
 int main(int argc, char *argv[]){
 	process_args(argc, argv);
-
-  cout << "Port: " << port << endl;
-
-  if(master)
-    cout << "ip addr: " << ip_addr << endl;
-
+  
   // act as a backup no matter what
   replica_init();
 
