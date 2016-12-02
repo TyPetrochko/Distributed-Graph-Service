@@ -17,7 +17,6 @@
 #include "mongoose.h"
 #include "memorygraph.hpp"
 #include "JSON.h"
-#include "replication.hpp"
 
 #include "gen-cpp/GraphEdit.h"
 
@@ -91,8 +90,6 @@ string err_msg = string("HTTP/1.1 400 Bad Request\r\n")
 + "Content-Length: 0\r\n"
 +	"Content-Type: application/json\r\n";
 
-// are we a slave (replica) and ip addr if so
-bool slave = false;
 char *ip_addr = 0;
 char *port = "9090";
 
@@ -106,7 +103,6 @@ void process_args(int argc, char **argv) {
   while ((option_char = getopt(argc, argv, "b")) != -1) {
     switch (option_char){
       case 'b':
-        slave = true;
         ip_addr = optarg;
         break;
       default: 
@@ -390,9 +386,6 @@ int main(int argc, char *argv[]){
 
 	TSimpleServer server(processor, serverTransport, transportFactory, protocolFactory);
 	server.serve();
-
-  if(slave)
-    replica_init(ip_addr);
 
 	struct mg_connection *nc;
 	struct mg_mgr mgr;
