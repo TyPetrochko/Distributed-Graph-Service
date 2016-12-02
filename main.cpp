@@ -40,6 +40,7 @@ class GraphEditHandler : virtual public GraphEditIf {
 
   bool editGraph(const Packet& p) {
     // Your implementation goes here
+    bool ret = true;
     switch(p.op) {
       case Operation::ADD_NODE:
         add_node(p.node_a);
@@ -54,10 +55,11 @@ class GraphEditHandler : virtual public GraphEditIf {
         remove_edge(p.node_a, p.node_b);
         break;
       default:
+      	ret = false;
         break;
     }
+    return ret;
   }
-
 };
 
 // default error message
@@ -177,9 +179,32 @@ string handle_request(string body, string uri){
 				p.node_b = root[L"node_b_id"];
 			}
 
-			client.editGraph(p);
+			bool ret = client.editGraph(p);
 
 			transport->close();
+			if (!ret) {
+				// give appropriate status message
+				string resp_status_msg = "Bad Request";
+
+				// build header
+				string headers_string = "Content-Length: " 
+					+ to_string(0)
+					+ "\r\n"
+					+ "Content-Type: application/json";
+
+				// build text to send
+				string to_send = proto
+					+ " "
+					+ to_string(500)
+					+ " "
+					+ resp_status_msg
+					+ "\r\n"
+					+ headers_string;
+				
+				to_send += "\r\n";
+
+				return to_send;
+			}
 		} catch (TException& tx) {
 			cout << "ERROR: " << tx.what() << endl;
 			return err_msg;
@@ -258,7 +283,7 @@ string handle_request(string body, string uri){
 			return_data[L"distance"] = new JSONValue((int) d.distance);
 			payload = json_to_string(return_data).c_str();
 		}
-	}else{
+	} else{
 		return err_msg;
 	}
 
