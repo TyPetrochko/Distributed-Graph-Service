@@ -281,11 +281,11 @@ int main(int argc, char *argv[]){
 	process_args(argc, argv);
   
   // act as a backup no matter what
-  // replica_init();
+  replica_init();
 
   // replicate if -b flag provided
   if(master)
-    master_init(ip_addr);
+   master_init(ip_addr);
 
   struct mg_connection *nc;
 	struct mg_mgr mgr;

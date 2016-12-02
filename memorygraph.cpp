@@ -16,9 +16,6 @@ using std::pair;
 using std::queue;
 using std::mutex;
 
-// Prevent concurrent access now that we're multi-threaded
-mutex mtx;
-
 static unordered_map<int64_t,list<int64_t> > adjacencyList;
 
 static unordered_set<int64_t> nodes;
@@ -29,48 +26,39 @@ struct traversedNode {
 };
 
 int add_node(int64_t node_id) {
-  mtx.lock();
 	if(get_node(node_id).in_graph) {
 		// Node already in graph
-    mtx.unlock();
 		return 204;
 	} else {
 		// Node not already in graph
 		nodes.insert(node_id);
 		adjacencyList[node_id];
-    mtx.unlock();
 		return 200;
 	}
 }
 
 int add_edge(int64_t node_a_id, int64_t node_b_id) {
-  mtx.lock();
 	if(node_a_id == node_b_id) {
 		// Nodes A and B are the same
-    mtx.unlock();
 		return 400;
 	}
 
 	struct nodeData edgeData = get_edge(node_a_id,node_b_id);
 	if(edgeData.status == 400) {
 		// A or B is not in the graph
-    mtx.unlock();
 		return 400;
 	} else if (edgeData.in_graph) {
 		// Edge already exists in the graph
-    mtx.unlock();
 		return 204;
 	} else {
 		// Add the edge to the adjacency list
 		adjacencyList[node_a_id].push_back(node_b_id);
 		adjacencyList[node_b_id].push_back(node_a_id);
-    mtx.unlock();
 		return 200;
 	}
 }
 
 int remove_node(int64_t node_id) {
-  mtx.lock();
 	unordered_set<int64_t>::const_iterator found = nodes.find(node_id);
 
 	if(found != nodes.end()){
@@ -91,17 +79,14 @@ int remove_node(int64_t node_id) {
 			// Clear adjacency list for node_id itself
 			adjacencyList.erase(node_id);
 		}
-    mtx.unlock();
 		return 200;
 	} else {
 		// Node does not exist
-    mtx.unlock();
 		return 400;
 	}
 }
 
 int remove_edge(int64_t node_a_id, int64_t node_b_id) {
-  mtx.lock();
 	unordered_map<int64_t,list<int64_t> >::const_iterator foundA = adjacencyList.find(node_a_id);
 	unordered_map<int64_t,list<int64_t> >::const_iterator foundB = adjacencyList.find(node_b_id);
 	if(foundA != adjacencyList.end() && foundB != adjacencyList.end()){
