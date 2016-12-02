@@ -378,7 +378,7 @@ int main(int argc, char *argv[]){
 	/*
 	 * Server thrift code for replication
 	 */
-	boost::shared_ptr<GraphEditHandler> handler(new GraphEditHandler(ip_addr));
+	boost::shared_ptr<GraphEditHandler> handler(new GraphEditHandler(ip_addr, port));
   	boost::shared_ptr<TProcessor> processor(new GraphEditProcessor(handler));
   	boost::shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
   	boost::shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
