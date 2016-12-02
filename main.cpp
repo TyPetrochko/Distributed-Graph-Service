@@ -6,12 +6,19 @@
 #include <vector>
 #include <string>
 
+#include <thrift/concurrency/ThreadManager.h>
+#include <thrift/concurrency/PlatformThreadFactory.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/server/TSimpleServer.h>
+#include <thrift/server/TThreadPoolServer.h>
+#include <thrift/server/TThreadedServer.h>
+#include <thrift/transport/TServerSocket.h>
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TTransportUtils.h>
-#include <thrift/transport/TServerSocket.h>
+#include <thrift/TToString.h>
 #include <thrift/transport/TBufferTransports.h>
+
+#include <boost/make_shared.hpp>
 
 #include "mongoose.h"
 #include "memorygraph.hpp"
@@ -25,6 +32,7 @@ using namespace apache::thrift;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 using namespace apache::thrift::server;
+using namespace apache::thrift::concurrency;
 
 using boost::shared_ptr;
 
