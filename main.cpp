@@ -44,12 +44,12 @@ class GraphEditHandler : virtual public GraphEditIf {
 
   bool editGraph(const Packet& p) {
     // Your implementation goes here
+	bool ret;
     if(nextip != 0 && nextport != 0) {
 	    boost::shared_ptr<TTransport> socket(new TSocket(nextip, stoi(nextport)));
 		boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
 		boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
 		GraphEditClient client(protocol);
-		bool ret;
 		try {
 			transport->open();
 			ret = client.editGraph(p);
@@ -72,7 +72,7 @@ class GraphEditHandler : virtual public GraphEditIf {
         add_edge(p.node_a, p.node_b);
         break;
       case Operation::REMOVE_NODE:
-        remove_add(p.node_a);
+        remove_node(p.node_a);
         break;
       case Operation::REMOVE_EDGE:
         remove_edge(p.node_a, p.node_b);
@@ -91,7 +91,7 @@ string err_msg = string("HTTP/1.1 400 Bad Request\r\n")
 +	"Content-Type: application/json\r\n";
 
 char *ip_addr = 0;
-char *port = "9090";
+char *port;
 
 void process_args(int argc, char **argv) {
 	if (argc < 2 || argc > 4){
@@ -176,7 +176,7 @@ string handle_request(string body, string uri){
 			Packet p;
 			if(func == "add_node" && root[L"node_id"] && root[L"node_id"]->IsNumber()){
 				p.op = Operation::ADD_NODE;
-				p.node_a = root[L"node_id"];
+				p.node_a = root[L"node_id"]->AsNumber();
 				write = true;
 			} else if (func == "add_edge" 
 				&& root[L"node_a_id"]
@@ -184,14 +184,14 @@ string handle_request(string body, string uri){
 				&& root[L"node_a_id"]->IsNumber() 
 				&& root[L"node_b_id"]->IsNumber()){
 				p.op = Operation::ADD_EDGE;
-				p.node_a = root[L"node_a_id"];
-				p.node_b = root[L"node_b_id"];
+				p.node_a = root[L"node_a_id"]->AsNumber();
+				p.node_b = root[L"node_b_id"]->AsNumber();
 				write = true;
 			} else if (func == "remove_node" 
 					&& root[L"node_id"] 
 					&& root[L"node_id"]->IsNumber()){
 				p.op = Operation::REMOVE_NODE;
-				p.node_a = root[L"node_id"];
+				p.node_a = root[L"node_id"]->AsNumber();
 				write = true;
 			}else if (func == "remove_edge"
 					&& root[L"node_a_id"]
@@ -199,8 +199,8 @@ string handle_request(string body, string uri){
 					&& root[L"node_a_id"]->IsNumber() 
 					&& root[L"node_b_id"]->IsNumber()){
 				p.op = Operation::REMOVE_EDGE;
-				p.node_a = root[L"node_a_id"];
-				p.node_b = root[L"node_b_id"];
+				p.node_a = root[L"node_a_id"]->AsNumber();
+				p.node_b = root[L"node_b_id"]->AsNumber();
 				write = true;
 			}
 
@@ -378,11 +378,11 @@ int main(int argc, char *argv[]){
 	/*
 	 * Server thrift code for replication
 	 */
-	shared_ptr<GraphEditHandler> handler(new GraphEditHandler(ip_addr));
-  	shared_ptr<TProcessor> processor(new GraphEditProcessor(handler));
-  	shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
-  	shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
-  	shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+	boost::shared_ptr<GraphEditHandler> handler(new GraphEditHandler(ip_addr));
+  	boost::shared_ptr<TProcessor> processor(new GraphEditProcessor(handler));
+  	boost::shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
+  	boost::shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
+  	boost::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
 
 	TSimpleServer server(processor, serverTransport, transportFactory, protocolFactory);
 	server.serve();
