@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -std=c++11 -pedantic -Wall -I ./include -g -lthrift
+CFLAGS = -std=c++11 -pedantic -Wall -I ./include -g
 
 all: main
 
