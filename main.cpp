@@ -1,6 +1,6 @@
 /* Much of this code is adapted from the mongoose examples page,
  * https://docs.cesanta.com/mongoose/dev/#/usage-example/ */
-#define DEBUG (true)
+#define DEBUG (false)
 
 #include <iostream>
 #include <vector>
