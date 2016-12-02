@@ -26,21 +26,45 @@ using namespace std;
 using namespace apache::thrift;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
-using namespace ::apache::thrift::server;
+using namespace apache::thrift::server;
 
 using boost::shared_ptr;
 
-using namespace  ::rpc;
+using namespace rpc;
 
 class GraphEditHandler : virtual public GraphEditIf {
  public:
-  GraphEditHandler() {
+ 	char *nextip = 0;
+ 	char *nextport = 0;
+
+  GraphEditHandler(char *ip, char *port) {
     // Your initialization goes here
+    nextip = ip;
+    nextport = port;
   }
 
   bool editGraph(const Packet& p) {
     // Your implementation goes here
-    bool ret = true;
+    if(nextip != 0 && nextport != 0) {
+	    boost::shared_ptr<TTransport> socket(new TSocket(nextip, stoi(nextport)));
+		boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+		boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+		GraphEditClient client(protocol);
+		bool ret;
+		try {
+			transport->open();
+			ret = client.editGraph(p);
+			transport->close();
+			if (!ret) {
+				return ret;
+			}
+		} catch (TException& tx) {
+			cout << "ERROR: " << tx.what() << endl;
+			return false;
+		}
+	}
+
+    ret = true;
     switch(p.op) {
       case Operation::ADD_NODE:
         add_node(p.node_a);
@@ -144,7 +168,7 @@ string handle_request(string body, string uri){
 	 * First propagate the request to the next server before committing own
 	 */
 	if(ip_addr != 0) {
-		boost::shared_ptr<TTransport> socket(new TSocket(ip_addr, 9090));
+		boost::shared_ptr<TTransport> socket(new TSocket(ip_addr, stoi(port)));
 		boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
 		boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
 		GraphEditClient client(protocol);
@@ -152,10 +176,12 @@ string handle_request(string body, string uri){
 		try {
 			transport->open();
 
+			bool write = false;
 			Packet p;
 			if(func == "add_node" && root[L"node_id"] && root[L"node_id"]->IsNumber()){
 				p.op = Operation::ADD_NODE;
 				p.node_a = root[L"node_id"];
+				write = true;
 			} else if (func == "add_edge" 
 				&& root[L"node_a_id"]
 				&& root[L"node_b_id"]
@@ -164,11 +190,13 @@ string handle_request(string body, string uri){
 				p.op = Operation::ADD_EDGE;
 				p.node_a = root[L"node_a_id"];
 				p.node_b = root[L"node_b_id"];
+				write = true;
 			} else if (func == "remove_node" 
 					&& root[L"node_id"] 
 					&& root[L"node_id"]->IsNumber()){
 				p.op = Operation::REMOVE_NODE;
 				p.node_a = root[L"node_id"];
+				write = true;
 			}else if (func == "remove_edge"
 					&& root[L"node_a_id"]
 					&& root[L"node_b_id"]
@@ -177,33 +205,36 @@ string handle_request(string body, string uri){
 				p.op = Operation::REMOVE_EDGE;
 				p.node_a = root[L"node_a_id"];
 				p.node_b = root[L"node_b_id"];
+				write = true;
 			}
 
-			bool ret = client.editGraph(p);
+			if (write) {
+				bool ret = client.editGraph(p);
 
-			transport->close();
-			if (!ret) {
-				// give appropriate status message
-				string resp_status_msg = "Bad Request";
+				transport->close();
+				if (!ret) {
+					// give appropriate status message
+					string resp_status_msg = "Bad Request";
 
-				// build header
-				string headers_string = "Content-Length: " 
-					+ to_string(0)
-					+ "\r\n"
-					+ "Content-Type: application/json";
+					// build header
+					string headers_string = "Content-Length: " 
+						+ to_string(0)
+						+ "\r\n"
+						+ "Content-Type: application/json";
 
-				// build text to send
-				string to_send = proto
-					+ " "
-					+ to_string(500)
-					+ " "
-					+ resp_status_msg
-					+ "\r\n"
-					+ headers_string;
-				
-				to_send += "\r\n";
+					// build text to send
+					string to_send = proto
+						+ " "
+						+ to_string(500)
+						+ " "
+						+ resp_status_msg
+						+ "\r\n"
+						+ headers_string;
+					
+					to_send += "\r\n";
 
-				return to_send;
+					return to_send;
+				}
 			}
 		} catch (TException& tx) {
 			cout << "ERROR: " << tx.what() << endl;
@@ -351,7 +382,7 @@ int main(int argc, char *argv[]){
 	/*
 	 * Server thrift code for replication
 	 */
-	shared_ptr<GraphEditHandler> handler(new GraphEditHandler());
+	shared_ptr<GraphEditHandler> handler(new GraphEditHandler(ip_addr));
   	shared_ptr<TProcessor> processor(new GraphEditProcessor(handler));
   	shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
   	shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
