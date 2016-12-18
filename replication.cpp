@@ -36,7 +36,6 @@ void serve_replica();
 GraphEditClient *client;
 
 char *ip;
-bool replicating = false;
 
 class GraphEditHandler : virtual public GraphEditIf {
  public:
@@ -53,25 +52,25 @@ class GraphEditHandler : virtual public GraphEditIf {
     ret = true;
     switch(p.op) {
       case Operation::ADD_NODE:
-        if(!repl_add_node(p.node_a))
+        if(!part_add_node(p.node_a))
           ret = false;
         else
           add_node(p.node_a);
         break;
       case Operation::ADD_EDGE:
-        if(!repl_add_edge(p.node_a, p.node_b))
+        if(!part_add_edge(p.node_a, p.node_b))
           ret = false;
         else
           add_edge(p.node_a, p.node_b);
         break;
       case Operation::REMOVE_NODE:
-        if(!repl_remove_node(p.node_a))
+        if(!part_remove_node(p.node_a))
           ret = false;
         else
           remove_node(p.node_a);
         break;
       case Operation::REMOVE_EDGE:
-        if(!repl_remove_edge(p.node_a, p.node_b))
+        if(!part_remove_edge(p.node_a, p.node_b))
           ret = false;
         else
           remove_edge(p.node_a, p.node_b);
@@ -90,21 +89,20 @@ void replica_init(){
   service.detach();
 }
 
-void master_init(char *ip_adr){
+void partitioning_init(int partition, list<char*> partitions){
   if(DEBUG)
-    cout << "Replicating on ip " << ip_adr << ", port " << PORT << endl;
-  replicating = true;
+    cout << "Starting partition" << partition << endl;
 
-  boost::shared_ptr<TTransport> socket(new TSocket(ip_adr, PORT));
-  boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-  boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
-  client = new GraphEditClient(protocol);
+  // boost::shared_ptr<TTransport> socket(new TSocket(ip_adr, PORT));
+  // boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+  // boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+  // client = new GraphEditClient(protocol);
 
-  try {
-    transport->open();
-  } catch(TException& tx) {
-    cout << "ERROR: " << tx.what() << endl;
-  }
+  // try {
+  //   transport->open();
+  // } catch(TException& tx) {
+  //   cout << "ERROR: " << tx.what() << endl;
+  // }
 }
 
 void serve_replica(){
@@ -129,66 +127,66 @@ void serve_replica(){
   cerr << "Aborting!" << endl;
 }
 
-bool repl_add_node(int64_t node_id){
-  Packet p;
-  p.op = Operation::ADD_NODE;
-  p.node_a = node_id;
-  if(replicating){
-    try {
-      return client->editGraph(p);
-    } catch(TException& tx) {
-      if(DEBUG)
-        cout << "REPLICATION ERROR: " << tx.what() << endl;
-      return false;
-    }
-  }
+bool part_add_node(int64_t node_id){
+  // Packet p;
+  // p.op = Operation::ADD_NODE;
+  // p.node_a = node_id;
+  // if(replicating){
+  //   try {
+  //     return client->editGraph(p);
+  //   } catch(TException& tx) {
+  //     if(DEBUG)
+  //       cout << "REPLICATION ERROR: " << tx.what() << endl;
+  //     return false;
+  //   }
+  // }
   return true;
 }
-bool repl_add_edge(int64_t node_a_id, int64_t node_b_id){
-  Packet p;
-  p.op = Operation::ADD_EDGE;
-  p.node_a = node_a_id;
-  p.node_b = node_b_id;
-  if(replicating){
-    try {
-      return client->editGraph(p);
-    } catch(TException& tx) {
-      if(DEBUG)
-        cout << "REPLICATION ERROR: " << tx.what() << endl;
-      return false;
-    }
-  }
+bool part_add_edge(int64_t node_a_id, int64_t node_b_id){
+  // Packet p;
+  // p.op = Operation::ADD_EDGE;
+  // p.node_a = node_a_id;
+  // p.node_b = node_b_id;
+  // if(replicating){
+  //   try {
+  //     return client->editGraph(p);
+  //   } catch(TException& tx) {
+  //     if(DEBUG)
+  //       cout << "REPLICATION ERROR: " << tx.what() << endl;
+  //     return false;
+  //   }
+  // }
   return true;
 }
-bool repl_remove_node(int64_t node_id){
-  Packet p;
-  p.op = Operation::REMOVE_NODE;
-  p.node_a = node_id;
-  if(replicating){
-    try {
-      return client->editGraph(p);
-    } catch(TException& tx) {
-      if(DEBUG)
-        cout << "REPLICATION ERROR: " << tx.what() << endl;
-      return false;
-    }
-  }
+bool part_remove_node(int64_t node_id){
+  // Packet p;
+  // p.op = Operation::REMOVE_NODE;
+  // p.node_a = node_id;
+  // if(replicating){
+  //   try {
+  //     return client->editGraph(p);
+  //   } catch(TException& tx) {
+  //     if(DEBUG)
+  //       cout << "REPLICATION ERROR: " << tx.what() << endl;
+  //     return false;
+  //   }
+  // }
   return true;
 }
-bool repl_remove_edge(int64_t node_a_id, int64_t node_b_id){
-  Packet p;
-  p.op = Operation::REMOVE_EDGE;
-  p.node_a = node_a_id;
-  p.node_b = node_b_id;
-  if(replicating){
-    try {
-      return client->editGraph(p);
-    } catch(TException& tx) {
-      if(DEBUG)
-        cout << "REPLICATION ERROR: " << tx.what() << endl;
-      return false;
-    }
-  }
+bool part_remove_edge(int64_t node_a_id, int64_t node_b_id){
+  // Packet p;
+  // p.op = Operation::REMOVE_EDGE;
+  // p.node_a = node_a_id;
+  // p.node_b = node_b_id;
+  // if(replicating){
+  //   try {
+  //     return client->editGraph(p);
+  //   } catch(TException& tx) {
+  //     if(DEBUG)
+  //       cout << "REPLICATION ERROR: " << tx.what() << endl;
+  //     return false;
+  //   }
+  // }
   return true;
 }
 

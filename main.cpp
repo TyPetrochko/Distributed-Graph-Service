@@ -1,6 +1,7 @@
 /* Much of this code is adapted from the mongoose examples page,
  * https://docs.cesanta.com/mongoose/dev/#/usage-example/ */
 #define DEBUG (false)
+#define USE_LOCKS (true)
 
 #include <iostream>
 #include <vector>
@@ -41,42 +42,32 @@ string err_msg = string("HTTP/1.1 400 Bad Request\r\n")
 + "Content-Length: 0\r\n"
 +	"Content-Type: application/json\r\n";
 
-bool master = false;
-char *ip_addr = 0;
+int partition_id = 0;
 char *port = 0;
+list<char*> partitions; // e.g. <104.11.4.1:9000, 130.0.9.122:8888>
 
 void process_args(int argc, char **argv) {
-	if (argc < 2 || argc > 4){
-    cerr << "Usage: ./cs426_graph_server [-b <ip_addr>] <port>" << endl;
+	if (argc < 6 || strcmp(argv[2], "-p") || strcmp(argv[4], "-l")){
+    cerr << "./cs426_graph_server <graph_server_port> -p <partnum> -l <partlist>" << endl;
 		exit(1);
 	}
 
-	int option_char;
-  while ((option_char = getopt(argc, argv, "b:")) != -1) {
-    switch (option_char){
-      case 'b':
-        if(optarg == NULL)
-          cerr << "WTF OPTARG NULL" << endl;
-        master = true;
-        ip_addr = optarg;
-        break;
-      default: 
-        cerr << "Usage: ./cs426_graph_server [-b <ip_addr>] <port>" << endl;
-        exit(1);
-    }
-  }
-  for(int i = 1; i < argc; i++) {
-    if (argv[i][0] == '-')
-      continue;
-    else if(ip_addr && !strcmp(argv[i], ip_addr))
-      continue;
-    
-    if(port == 0)
-      port = argv[i];
+  port = argv[1];
+  partition_id = atoi(argv[3]);
+
+  int i;
+  for(i = 5; i < argc; i++){
+    partitions.push_back(argv[i]);
   }
 
-  if(port == 0)
-    cerr << "No port specified!" << endl;
+  if(DEBUG){
+    cout << "Partition: " << partition_id << ", port: " << port 
+      << ", partitions: " << endl;
+
+    for(char *p : partitions){
+      cout << "\t" << p << endl;
+    }
+  }
 }
 
 // convert mongoose's weird string struct to a regular c++ string
@@ -127,7 +118,7 @@ string handle_request(string body, string uri){
 
   // giant pseudo-switch statement to actually call the API
   if(func == "add_node" && root[L"node_id"] && root[L"node_id"]->IsNumber()){
-    if(!repl_add_node(root[L"node_id"]->AsNumber()))
+    if(!part_add_node(root[L"node_id"]->AsNumber()))
       resp_code = 500;
     else
       resp_code = add_node(root[L"node_id"]->AsNumber());
@@ -137,7 +128,7 @@ string handle_request(string body, string uri){
       && root[L"node_b_id"]
       && root[L"node_a_id"]->IsNumber() 
       && root[L"node_b_id"]->IsNumber()){
-    if(!repl_add_edge(
+    if(!part_add_edge(
           root[L"node_a_id"]->AsNumber(),
           root[L"node_b_id"]->AsNumber()))
       resp_code = 500;
@@ -149,7 +140,7 @@ string handle_request(string body, string uri){
   }else if (func == "remove_node" 
       && root[L"node_id"] 
       && root[L"node_id"]->IsNumber()){
-    if(!repl_remove_node(root[L"node_id"]->AsNumber()))
+    if(!part_remove_node(root[L"node_id"]->AsNumber()))
       resp_code = 500;
     else
       resp_code = remove_node(root[L"node_id"]->AsNumber());
@@ -159,7 +150,7 @@ string handle_request(string body, string uri){
       && root[L"node_b_id"]
       && root[L"node_a_id"]->IsNumber() 
       && root[L"node_b_id"]->IsNumber()){
-    if(!repl_remove_edge(
+    if(!part_remove_edge(
           root[L"node_a_id"]->AsNumber(),
           root[L"node_b_id"]->AsNumber()))
       resp_code = 500;
@@ -284,8 +275,7 @@ int main(int argc, char *argv[]){
   replica_init();
 
   // replicate if -b flag provided
-  if(master)
-   master_init(ip_addr);
+  partitioning_init(partition_id, partitions);
 
   struct mg_connection *nc;
 	struct mg_mgr mgr;
