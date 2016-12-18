@@ -34,6 +34,7 @@ using namespace std;
 void serve_partition(int port, int partition);
 
 vector<GraphEditClient *> clients;
+int my_partition_id;
 char *ip;
 mutex mtx;
 
@@ -125,6 +126,7 @@ void partitioning_init(int partition, vector<char*> partitions){
 }
 
 void serve_partition(int port, int partition){
+  my_partition_id = partition;
   if(DEBUG)
     cout << "Partition server " << partition << " starting up on port "
       << port << endl;
@@ -149,9 +151,15 @@ void serve_partition(int port, int partition){
 }
 
 bool part_add_node(int64_t node_id){
+  if(get_partition_index_for_node(node_id) + 1 != my_partition_id)
+    return false;
   return true;
 }
 bool part_add_edge(int64_t node_a_id, int64_t node_b_id){
+  if(get_partition_index_for_node(node_a_id) + 1 != my_partition_id 
+      && get_partition_index_for_node(node_b_id) + 1 != my_partition_id )
+    return false;
+
   Packet p;
   p.op = Operation::ADD_EDGE;
   p.node_a = node_a_id;
@@ -197,9 +205,14 @@ die:
   return false;
 }
 bool part_remove_node(int64_t node_id){
+  if(get_partition_index_for_node(node_id) + 1 != my_partition_id)
+    return false;
   return true;
 }
 bool part_remove_edge(int64_t node_a_id, int64_t node_b_id){
+  if(get_partition_index_for_node(node_a_id) + 1 != my_partition_id 
+      && get_partition_index_for_node(node_b_id) + 1 != my_partition_id )
+    return false;
   Packet p;
   p.op = Operation::REMOVE_EDGE;
   p.node_a = node_a_id;
