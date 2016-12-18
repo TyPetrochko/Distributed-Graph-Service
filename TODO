@@ -1,2 +1,0 @@
-2) Modify Robert's graph implementation so add_edge, remove_edge, get_edge only fails if
-  both nodes are missing!

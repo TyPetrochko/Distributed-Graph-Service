@@ -45,15 +45,25 @@ int add_edge(int64_t node_a_id, int64_t node_b_id) {
 
 	struct nodeData edgeData = get_edge(node_a_id,node_b_id);
 	if(edgeData.status == 400) {
-		// A or B is not in the graph
+		// A and B is not in the graph
 		return 400;
 	} else if (edgeData.in_graph) {
 		// Edge already exists in the graph
 		return 204;
 	} else {
 		// Add the edge to the adjacency list
-		adjacencyList[node_a_id].push_back(node_b_id);
-		adjacencyList[node_b_id].push_back(node_a_id);
+    unordered_set<int64_t>::const_iterator foundA = nodes.find(node_a_id);
+    unordered_set<int64_t>::const_iterator foundB = nodes.find(node_b_id);
+
+    bool a_exists, b_exists;
+
+    a_exists = (foundA != nodes.end());
+    b_exists = (foundB != nodes.end());
+
+    if(a_exists)
+      adjacencyList[node_a_id].push_back(node_b_id);
+    if(b_exists)
+      adjacencyList[node_b_id].push_back(node_a_id);
 		return 200;
 	}
 }
@@ -87,33 +97,42 @@ int remove_node(int64_t node_id) {
 }
 
 int remove_edge(int64_t node_a_id, int64_t node_b_id) {
-	unordered_map<int64_t,list<int64_t> >::const_iterator foundA = adjacencyList.find(node_a_id);
-	unordered_map<int64_t,list<int64_t> >::const_iterator foundB = adjacencyList.find(node_b_id);
-	if(foundA != adjacencyList.end() && foundB != adjacencyList.end()){
+  unordered_map<int64_t,list<int64_t> >::const_iterator foundA = adjacencyList.find(node_a_id);
+  unordered_map<int64_t,list<int64_t> >::const_iterator foundB = adjacencyList.find(node_b_id);
+  
+  bool a_exists, b_exists;
+
+  a_exists = (foundA != adjacencyList.end());
+  b_exists = (foundB != adjacencyList.end());
+
+	if(a_exists || b_exists){
 		bool adjacencyFound = false;
 
 		// Remove B from A's adjacency list
-		list<int64_t> edgesFromA = foundA->second;
-		for(list<int64_t>::const_iterator i = edgesFromA.begin(); i != edgesFromA.end(); i++) {
-			if((*i) == node_b_id){
-				// adjacencyList[node_a_id].erase(i);
-				adjacencyFound = true;
-				break;
-			}
-		}
+    if(a_exists){
+      list<int64_t> edgesFromA = foundA->second;
+      for(list<int64_t>::const_iterator i = edgesFromA.begin(); i != edgesFromA.end(); i++) {
+        if((*i) == node_b_id){
+          // adjacencyList[node_a_id].erase(i);
+          adjacencyFound = true;
+          break;
+        }
+      }
+      adjacencyList[node_a_id].remove(node_b_id);
+    }
 
 		// Remove A from B's adjacency list
-		list<int64_t> edgesFromB = foundB->second;
-		for(list<int64_t>::const_iterator i = edgesFromB.begin(); i != edgesFromB.end(); i++) {
-			if((*i) == node_a_id){
-				// adjacencyList[node_b_id].erase(i);
-				adjacencyFound = true;
-				break;
-			}
-		}
-
-		adjacencyList[node_b_id].remove(node_a_id);
-		adjacencyList[node_a_id].remove(node_b_id);
+    if(b_exists){
+      list<int64_t> edgesFromB = foundB->second;
+      for(list<int64_t>::const_iterator i = edgesFromB.begin(); i != edgesFromB.end(); i++) {
+        if((*i) == node_a_id){
+          // adjacencyList[node_b_id].erase(i);
+          adjacencyFound = true;
+          break;
+        }
+      }
+      adjacencyList[node_b_id].remove(node_a_id);
+    }
 
 		if(adjacencyFound){
 			return 200;
@@ -144,27 +163,40 @@ struct nodeData get_edge(int64_t node_a_id, int64_t node_b_id) {
 	unordered_set<int64_t>::const_iterator foundA = nodes.find(node_a_id);
 	unordered_set<int64_t>::const_iterator foundB = nodes.find(node_b_id);
 
-	if(foundA == nodes.end() || foundB == nodes.end()) {
-		// A or B not in graph
+	if(foundA == nodes.end() && foundB == nodes.end()) {
+		// A and B not in graph
 		out.status = 400;
 		out.in_graph = false;
-	} else {
+	} else if(foundA != nodes.end()){
 		out.status = 200;
 
-		// A and B in graph
-		list<int64_t> adjacentToA = adjacencyList[node_a_id];
-		bool nodesAdjacent = false;
+		// A in graph
+    if(foundA != nodes.end()){
+      list<int64_t> adjacentToA = adjacencyList[node_a_id];
+      bool nodesAdjacent = false;
 
-		for(int64_t node : adjacentToA) {
-			if(node == node_b_id) {
-				nodesAdjacent = true;
-				break;
-			}
-		}
-		out.in_graph = nodesAdjacent;
-	}
-
-	return out;
+      for(int64_t node : adjacentToA) {
+        if(node == node_b_id) {
+          nodesAdjacent = true;
+          break;
+        }
+      }
+      out.in_graph = nodesAdjacent;
+    }
+  } else {
+    list<int64_t> adjacentToB = adjacencyList[node_b_id];
+    bool nodesAdjacent = false;
+      
+    // A in graph
+    for(int64_t node : adjacentToB) {
+      if(node == node_a_id) {
+        nodesAdjacent = true;
+        break;
+      }
+    }
+    out.in_graph = nodesAdjacent;
+  }
+  return out;
 }
 
 struct neighborData get_neighbors(int64_t node_id) {
