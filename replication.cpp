@@ -92,29 +92,37 @@ void partitioning_init(int partition, vector<char*> partitions){
   unsigned int i;
   for (i = 0; i < partitions.size(); i++){
     string p = string(partitions[i]);
+      
+    if(DEBUG)
+      cout << "Connecting to partition " << i + 1 << ", " << p << "..."
+        << endl;
 
     string ip_adr = p.substr(0, p.find(":"));
     int port = atoi(p.substr(1 + p.find(":")).c_str());
-
-    if(DEBUG)
-      cout << "Initiating client " << i + 1 << " at ip " << ip_adr << ", port " 
-        << port << endl;
     
     boost::shared_ptr<TTransport> socket(new TSocket(ip_adr, port));
     boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
     boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
     clients.push_back(new GraphEditClient(protocol));
-
-    sleep(2000);
-    cout << "Waking up!" << endl;
-    try {
-      transport->open();
-    } catch(TException& tx) {
-      cout << "ERROR: " << tx.what() << endl;
+  
+    // wait for all partitions to come on-line
+    while(true){
+      try {
+        transport->open();
+        if(DEBUG)
+          cout << "\tConnected to partition " << i + 1 << ", " << p << "!" 
+            << endl;
+        break;
+      } catch(TException& tx) {
+        if(DEBUG)
+          cout << "." << endl;
+        sleep(1);
+      }
     }
-    if(DEBUG)
-      cout << "\tDone!" << endl;
   }
+
+  if(DEBUG)
+    cout << "Connected to all partitions!" << endl;
 }
 
 void serve_partition(int port, int partition){

@@ -14,6 +14,9 @@ memorygraph.o: memorygraph.cpp memorygraph.hpp
 clean:
 	$(RM) cs426_graph_server memorygraph
 
+rundummy:
+	./cs426_graph_server 8000 -p 1 -l 104.196.163.178:6000
+
 run1:
 	./cs426_graph_server 8000 -p 1 -l 104.196.163.178:6000 104.196.163.178:6001
 
