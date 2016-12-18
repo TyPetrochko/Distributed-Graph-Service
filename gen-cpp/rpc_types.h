@@ -24,7 +24,8 @@ struct Operation {
     ADD_NODE = 0,
     ADD_EDGE = 1,
     REMOVE_NODE = 2,
-    REMOVE_EDGE = 3
+    REMOVE_EDGE = 3,
+    LOCK = 4
   };
 };
 

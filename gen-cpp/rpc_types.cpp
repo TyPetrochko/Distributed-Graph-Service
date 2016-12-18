@@ -17,15 +17,17 @@ int _kOperationValues[] = {
   Operation::ADD_NODE,
   Operation::ADD_EDGE,
   Operation::REMOVE_NODE,
-  Operation::REMOVE_EDGE
+  Operation::REMOVE_EDGE,
+  Operation::LOCK
 };
 const char* _kOperationNames[] = {
   "ADD_NODE",
   "ADD_EDGE",
   "REMOVE_NODE",
-  "REMOVE_EDGE"
+  "REMOVE_EDGE",
+  "LOCK"
 };
-const std::map<int, const char*> _Operation_VALUES_TO_NAMES(::apache::thrift::TEnumIterator(4, _kOperationValues, _kOperationNames), ::apache::thrift::TEnumIterator(-1, NULL, NULL));
+const std::map<int, const char*> _Operation_VALUES_TO_NAMES(::apache::thrift::TEnumIterator(5, _kOperationValues, _kOperationNames), ::apache::thrift::TEnumIterator(-1, NULL, NULL));
 
 
 Packet::~Packet() throw() {
