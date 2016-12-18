@@ -1,6 +1,6 @@
 /* Much of this code is adapted from the mongoose examples page,
  * https://docs.cesanta.com/mongoose/dev/#/usage-example/ */
-#define DEBUG (false)
+#define DEBUG (true)
 #define USE_LOCKS (true)
 
 #include <iostream>
@@ -44,7 +44,7 @@ string err_msg = string("HTTP/1.1 400 Bad Request\r\n")
 
 int partition_id = 0;
 char *port = 0;
-list<char*> partitions; // e.g. <104.11.4.1:9000, 130.0.9.122:8888>
+vector<char*> partitions; // e.g. <104.11.4.1:9000, 130.0.9.122:8888>
 
 void process_args(int argc, char **argv) {
 	if (argc < 6 || strcmp(argv[2], "-p") || strcmp(argv[4], "-l")){
@@ -270,11 +270,8 @@ static void ev_handler(struct mg_connection *nc, int ev, void *ev_data) {
 
 int main(int argc, char *argv[]){
 	process_args(argc, argv);
-  
-  // act as a backup no matter what
-  replica_init();
-
-  // replicate if -b flag provided
+ 
+  // init us as a partition
   partitioning_init(partition_id, partitions);
 
   struct mg_connection *nc;

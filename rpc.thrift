@@ -5,7 +5,8 @@ enum Operation {
   ADD_EDGE = 1,
   REMOVE_NODE = 2,
   REMOVE_EDGE = 3,
-  LOCK = 4
+  LOCK = 4,
+  UNLOCK = 5
 }
 
 struct Packet {

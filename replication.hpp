@@ -1,5 +1,4 @@
-void replica_init();
-void partitioning_init(int partition, std::list<char*> partitions);
+void partitioning_init(int partition, std::vector<char*> partitions);
 
 // handle partitioning and return success
 bool part_add_node(int64_t node_id);

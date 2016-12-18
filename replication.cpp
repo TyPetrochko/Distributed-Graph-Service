@@ -19,8 +19,7 @@
 #include "memorygraph.hpp"
 #include "gen-cpp/GraphEdit.h"
 
-#define DEBUG (false)
-#define PORT (9090)
+#define DEBUG (true)
 
 using namespace apache::thrift;
 using namespace apache::thrift::protocol;
@@ -31,9 +30,9 @@ using namespace apache::thrift::concurrency;
 using namespace rpc;
 using namespace std;
 
-void serve_replica();
+void serve_partition(int port, int partition);
 
-GraphEditClient *client;
+vector<GraphEditClient *> clients;
 
 char *ip;
 
@@ -84,43 +83,58 @@ class GraphEditHandler : virtual public GraphEditIf {
   }
 };
 
-void replica_init(){
-  thread service(serve_replica);
+void partitioning_init(int partition, vector<char*> partitions){
+  string us = string(partitions[partition - 1]);
+  int local_port = atoi(us.substr(1 + us.find(":")).c_str());
+  thread service(serve_partition, local_port, partition);
   service.detach();
+
+  unsigned int i;
+  for (i = 0; i < partitions.size(); i++){
+    string p = string(partitions[i]);
+
+    string ip_adr = p.substr(0, p.find(":"));
+    int port = atoi(p.substr(1 + p.find(":")).c_str());
+
+    if(DEBUG)
+      cout << "Initiating client " << i + 1 << " at ip " << ip_adr << ", port " 
+        << port << endl;
+    
+    boost::shared_ptr<TTransport> socket(new TSocket(ip_adr, port));
+    boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+    boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+    clients.push_back(new GraphEditClient(protocol));
+
+    sleep(2000);
+    cout << "Waking up!" << endl;
+    try {
+      transport->open();
+    } catch(TException& tx) {
+      cout << "ERROR: " << tx.what() << endl;
+    }
+    if(DEBUG)
+      cout << "\tDone!" << endl;
+  }
 }
 
-void partitioning_init(int partition, list<char*> partitions){
+void serve_partition(int port, int partition){
   if(DEBUG)
-    cout << "Starting partition" << partition << endl;
-
-  // boost::shared_ptr<TTransport> socket(new TSocket(ip_adr, PORT));
-  // boost::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-  // boost::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
-  // client = new GraphEditClient(protocol);
-
-  // try {
-  //   transport->open();
-  // } catch(TException& tx) {
-  //   cout << "ERROR: " << tx.what() << endl;
-  // }
-}
-
-void serve_replica(){
-  if(DEBUG)
-    cout << "Replica service thread starting up on port " << PORT << endl;
+    cout << "Partition server " << partition << " starting up on port "
+      << port << endl;
   
   boost::shared_ptr<GraphEditHandler> handler(new GraphEditHandler());
   boost::shared_ptr<TProcessor> processor(new GraphEditProcessor(handler));
-  boost::shared_ptr<TServerTransport> serverTransport(new TServerSocket(PORT));
+  boost::shared_ptr<TServerTransport> serverTransport(new TServerSocket(port));
   boost::shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
   boost::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
   
   TThreadedServer server(processor, serverTransport, transportFactory, protocolFactory);
   server.serve();
-  
+ 
+  // DIFFERENT SERVER-TYPE
   // TThreadedServer server(
   //   boost::make_shared<GraphEditProcessorFactory>(boost::make_shared<GraphEditCloneFactory>()),
-  //   boost::make_shared<TServerSocket>(PORT),
+  //   boost::make_shared<TServerSocket>(port),
   //   boost::make_shared<TBufferedTransportFactory>(),
   //   boost::make_shared<TBinaryProtocolFactory>());
   // server.serve();
