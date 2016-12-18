@@ -133,9 +133,7 @@ string handle_request(string body, string uri){
           root[L"node_b_id"]->AsNumber()))
       resp_code = 500;
     else
-      resp_code = add_edge(
-          root[L"node_a_id"]->AsNumber(),
-          root[L"node_b_id"]->AsNumber());
+      resp_code = 200; // everything handled by part_add_edge
     if(resp_code == 200) payload = body;
   }else if (func == "remove_node" 
       && root[L"node_id"] 
@@ -155,9 +153,7 @@ string handle_request(string body, string uri){
           root[L"node_b_id"]->AsNumber()))
       resp_code = 500;
     else
-      resp_code = remove_edge(
-          root[L"node_a_id"]->AsNumber(),
-          root[L"node_b_id"]->AsNumber());
+      resp_code = 200; // again, everything handled by part_remove_edge
     if(resp_code == 200) payload = body;
   }else if (func == "get_node" 
       && root[L"node_id"] 

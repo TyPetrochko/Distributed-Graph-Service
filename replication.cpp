@@ -20,6 +20,7 @@
 #include "gen-cpp/GraphEdit.h"
 
 #define DEBUG (true)
+#define LOCKING (true)
 
 using namespace apache::thrift;
 using namespace apache::thrift::protocol;
@@ -33,8 +34,12 @@ using namespace std;
 void serve_partition(int port, int partition);
 
 vector<GraphEditClient *> clients;
-
 char *ip;
+mutex mtx;
+
+int get_partition_index_for_node(int node){
+  return node % (clients.size());
+}
 
 class GraphEditHandler : virtual public GraphEditIf {
  public:
@@ -51,28 +56,22 @@ class GraphEditHandler : virtual public GraphEditIf {
     ret = true;
     switch(p.op) {
       case Operation::ADD_NODE:
-        if(!part_add_node(p.node_a))
-          ret = false;
-        else
-          add_node(p.node_a);
+        add_node(p.node_a);
         break;
       case Operation::ADD_EDGE:
-        if(!part_add_edge(p.node_a, p.node_b))
-          ret = false;
-        else
-          add_edge(p.node_a, p.node_b);
+        add_edge(p.node_a, p.node_b);
         break;
       case Operation::REMOVE_NODE:
-        if(!part_remove_node(p.node_a))
-          ret = false;
-        else
-          remove_node(p.node_a);
+        remove_node(p.node_a);
         break;
       case Operation::REMOVE_EDGE:
-        if(!part_remove_edge(p.node_a, p.node_b))
-          ret = false;
-        else
-          remove_edge(p.node_a, p.node_b);
+        remove_edge(p.node_a, p.node_b);
+        break;
+      case Operation::LOCK:
+        mtx.lock();
+        break;
+      case Operation::UNLOCK:
+        mtx.unlock();
         break;
       default:
         cerr << "Received bad operation: " << p.op << endl;
@@ -150,65 +149,100 @@ void serve_partition(int port, int partition){
 }
 
 bool part_add_node(int64_t node_id){
-  // Packet p;
-  // p.op = Operation::ADD_NODE;
-  // p.node_a = node_id;
-  // if(replicating){
-  //   try {
-  //     return client->editGraph(p);
-  //   } catch(TException& tx) {
-  //     if(DEBUG)
-  //       cout << "REPLICATION ERROR: " << tx.what() << endl;
-  //     return false;
-  //   }
-  // }
   return true;
 }
 bool part_add_edge(int64_t node_a_id, int64_t node_b_id){
-  // Packet p;
-  // p.op = Operation::ADD_EDGE;
-  // p.node_a = node_a_id;
-  // p.node_b = node_b_id;
-  // if(replicating){
-  //   try {
-  //     return client->editGraph(p);
-  //   } catch(TException& tx) {
-  //     if(DEBUG)
-  //       cout << "REPLICATION ERROR: " << tx.what() << endl;
-  //     return false;
-  //   }
-  // }
+  Packet p;
+  p.op = Operation::ADD_EDGE;
+  p.node_a = node_a_id;
+  p.node_b = node_b_id;
+ 
+  // make sure a and b are in ascending order
+  int a, b;
+  GraphEditClient *client_a, *client_b;
+  a = min(get_partition_index_for_node(node_a_id), 
+      get_partition_index_for_node(node_b_id));
+  b = max(get_partition_index_for_node(node_a_id), 
+      get_partition_index_for_node(node_b_id));
+
+  client_a = clients[a];
+  client_b = clients[b];
+
+  if(LOCKING){
+    Packet p2;
+    p.op = Operation::LOCK;
+    if(!client_a->editGraph(p2) || !client_b->editGraph(p2))
+      goto die;
+  }
+  
+  try {
+    if(!client_a->editGraph(p) || !client_b->editGraph(p))
+      goto die;
+  } catch(TException& tx) {
+    if(DEBUG)
+      cout << "REPLICATION ERROR: " << tx.what() << endl;
+    return false;
+  }
+  
+  if(LOCKING){
+    Packet p2;
+    p.op = Operation::UNLOCK;
+    if(!client_a->editGraph(p2) || !client_b->editGraph(p2))
+      goto die;
+  }
   return true;
+
+die:
+  cout << "Something went wrong in sending add edge rpc's" << endl;
+  return false;
 }
 bool part_remove_node(int64_t node_id){
-  // Packet p;
-  // p.op = Operation::REMOVE_NODE;
-  // p.node_a = node_id;
-  // if(replicating){
-  //   try {
-  //     return client->editGraph(p);
-  //   } catch(TException& tx) {
-  //     if(DEBUG)
-  //       cout << "REPLICATION ERROR: " << tx.what() << endl;
-  //     return false;
-  //   }
-  // }
   return true;
 }
 bool part_remove_edge(int64_t node_a_id, int64_t node_b_id){
-  // Packet p;
-  // p.op = Operation::REMOVE_EDGE;
-  // p.node_a = node_a_id;
-  // p.node_b = node_b_id;
-  // if(replicating){
-  //   try {
-  //     return client->editGraph(p);
-  //   } catch(TException& tx) {
-  //     if(DEBUG)
-  //       cout << "REPLICATION ERROR: " << tx.what() << endl;
-  //     return false;
-  //   }
-  // }
+  Packet p;
+  p.op = Operation::REMOVE_EDGE;
+  p.node_a = node_a_id;
+  p.node_b = node_b_id;
+ 
+  // make sure a and b are in ascending order
+  int a, b;
+  GraphEditClient *client_a, *client_b;
+  a = min(get_partition_index_for_node(node_a_id), 
+      get_partition_index_for_node(node_b_id));
+  b = max(get_partition_index_for_node(node_a_id), 
+      get_partition_index_for_node(node_b_id));
+
+  client_a = clients[a];
+  client_b = clients[b];
+
+  if(LOCKING){
+    Packet p2;
+    p.op = Operation::LOCK;
+    if(!client_a->editGraph(p2) || !client_b->editGraph(p2))
+      goto die;
+  }
+  
+  try {
+    if(!client_a->editGraph(p) || !client_b->editGraph(p))
+      goto die;
+  } catch(TException& tx) {
+    if(DEBUG)
+      cout << "REPLICATION ERROR: " << tx.what() << endl;
+    return false;
+  }
+  
+  if(LOCKING){
+    Packet p2;
+    p.op = Operation::UNLOCK;
+    if(!client_a->editGraph(p2) || !client_b->editGraph(p2))
+      goto die;
+  }
+
   return true;
+
+die:
+  cout << "Something went wrong in sending remove edge rpc's" << endl;
+  return false;
 }
 
