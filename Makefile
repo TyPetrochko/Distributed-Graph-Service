@@ -15,13 +15,13 @@ clean:
 	$(RM) cs426_graph_server memorygraph
 
 rundummy:
-	./cs426_graph_server 8000 -p 1 -l 104.196.163.178:6000
+	./cs426_graph_server 8000 -p 1 -l 104.154.251.161:6000
 
 run1:
-	./cs426_graph_server 8000 -p 1 -l 104.196.163.178:6000 104.196.163.178:6001
+	./cs426_graph_server 9000 -p 1 -l 127.0.0.1:6000 127.0.0.1:6001
 
 run2:
-	./cs426_graph_server 8001 -p 2 -l 104.196.163.178:6000 104.196.163.178:6001
+	./cs426_graph_server 9001 -p 2 -l 127.0.0.1:6000 127.0.0.1:6001
 
 test:
 	/c/cs426/scripts/lab1test.sh http://127.0.0.1:8080

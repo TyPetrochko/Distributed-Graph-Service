@@ -19,7 +19,7 @@
 #include "memorygraph.hpp"
 #include "gen-cpp/GraphEdit.h"
 
-#define DEBUG (true)
+#define DEBUG (false)
 #define LOCKING (true)
 
 using namespace apache::thrift;
@@ -69,9 +69,13 @@ class GraphEditHandler : virtual public GraphEditIf {
         remove_edge(p.node_a, p.node_b);
         break;
       case Operation::LOCK:
+        if(DEBUG)
+          cout << "Partition " << my_partition_id << " LOCKING" << endl;
         mtx.lock();
         break;
       case Operation::UNLOCK:
+        if(DEBUG)
+          cout << "Partition " << my_partition_id << " UNLOCKING" << endl;
         mtx.unlock();
         break;
       default:
@@ -151,11 +155,18 @@ void serve_partition(int port, int partition){
 }
 
 bool part_add_node(int64_t node_id){
+  if (DEBUG)
+    cout << "Partition id " << my_partition_id << " adding node " << node_id 
+      << endl;
   if(get_partition_index_for_node(node_id) + 1 != my_partition_id)
     return false;
   return true;
 }
+
 bool part_add_edge(int64_t node_a_id, int64_t node_b_id){
+  if (DEBUG)
+    cout << "Partition id " << my_partition_id << " adding edge " << node_a_id
+      << " - " << node_b_id << endl; 
   if(get_partition_index_for_node(node_a_id) + 1 != my_partition_id 
       && get_partition_index_for_node(node_b_id) + 1 != my_partition_id )
     return false;
@@ -177,15 +188,29 @@ bool part_add_edge(int64_t node_a_id, int64_t node_b_id){
   client_b = clients[b];
 
   if(LOCKING){
+    if(DEBUG)
+      cout << "Locking partitions" << endl;
     Packet p2;
-    p.op = Operation::LOCK;
-    if(!client_a->editGraph(p2) || !client_b->editGraph(p2))
-      goto die;
+    p2.op = Operation::LOCK;
+    if(a == b){
+      if(!client_a->editGraph(p2))
+        goto die;
+    } else {
+      if(!client_a->editGraph(p2) || !client_b->editGraph(p2))
+        goto die;
+    }
   }
-  
+ 
+  if(DEBUG)
+    cout << "Sending add edge rpc!" << endl;
   try {
-    if(!client_a->editGraph(p) || !client_b->editGraph(p))
-      goto die;
+    if(a == b){
+      if(!client_a->editGraph(p))
+        goto die;
+    } else {
+      if(!client_a->editGraph(p) || !client_b->editGraph(p))
+        goto die;
+    }
   } catch(TException& tx) {
     if(DEBUG)
       cout << "REPLICATION ERROR: " << tx.what() << endl;
@@ -193,10 +218,17 @@ bool part_add_edge(int64_t node_a_id, int64_t node_b_id){
   }
   
   if(LOCKING){
+    if(DEBUG)
+      cout << "Unlocking partitions" << endl;
     Packet p2;
-    p.op = Operation::UNLOCK;
-    if(!client_a->editGraph(p2) || !client_b->editGraph(p2))
-      goto die;
+    p2.op = Operation::UNLOCK;
+    if(a == b){
+      if(!client_a->editGraph(p2))
+        goto die;
+    } else {
+      if(!client_a->editGraph(p2) || !client_b->editGraph(p2))
+        goto die;
+    }
   }
   return true;
 
@@ -204,12 +236,20 @@ die:
   cout << "Something went wrong in sending add edge rpc's" << endl;
   return false;
 }
+
 bool part_remove_node(int64_t node_id){
+  if (DEBUG)
+    cout << "Partition id " << my_partition_id << " removing node " << node_id 
+      << endl;
   if(get_partition_index_for_node(node_id) + 1 != my_partition_id)
     return false;
   return true;
 }
+
 bool part_remove_edge(int64_t node_a_id, int64_t node_b_id){
+  if (DEBUG)
+    cout << "Partition id " << my_partition_id << " removing edge " 
+      << node_a_id << " - " << node_b_id << endl; 
   if(get_partition_index_for_node(node_a_id) + 1 != my_partition_id 
       && get_partition_index_for_node(node_b_id) + 1 != my_partition_id )
     return false;
@@ -231,9 +271,14 @@ bool part_remove_edge(int64_t node_a_id, int64_t node_b_id){
 
   if(LOCKING){
     Packet p2;
-    p.op = Operation::LOCK;
-    if(!client_a->editGraph(p2) || !client_b->editGraph(p2))
-      goto die;
+    p2.op = Operation::LOCK;
+    if(a == b){
+      if(!client_a->editGraph(p2))
+        goto die;
+    } else {
+      if(!client_a->editGraph(p2) || !client_b->editGraph(p2))
+        goto die;
+    }
   }
   
   try {
@@ -247,9 +292,14 @@ bool part_remove_edge(int64_t node_a_id, int64_t node_b_id){
   
   if(LOCKING){
     Packet p2;
-    p.op = Operation::UNLOCK;
-    if(!client_a->editGraph(p2) || !client_b->editGraph(p2))
-      goto die;
+    p2.op = Operation::UNLOCK;
+    if(a == b){
+      if(!client_a->editGraph(p2))
+        goto die;
+    } else {
+      if(!client_a->editGraph(p2) || !client_b->editGraph(p2))
+        goto die;
+    }
   }
 
   return true;

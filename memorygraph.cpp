@@ -15,6 +15,7 @@ using std::cout;
 using std::pair;
 using std::queue;
 using std::mutex;
+using std::endl;
 
 static unordered_map<int64_t,list<int64_t> > adjacencyList;
 
@@ -60,10 +61,12 @@ int add_edge(int64_t node_a_id, int64_t node_b_id) {
     a_exists = (foundA != nodes.end());
     b_exists = (foundB != nodes.end());
 
-    if(a_exists)
+    if(a_exists){
       adjacencyList[node_a_id].push_back(node_b_id);
-    if(b_exists)
+    }
+    if(b_exists){
       adjacencyList[node_b_id].push_back(node_a_id);
+    }
 		return 200;
 	}
 }
